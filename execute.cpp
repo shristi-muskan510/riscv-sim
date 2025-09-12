@@ -130,5 +130,53 @@ void execute_instr(cpu &c, uint32_t opcode, uint32_t func3, uint32_t func7, uint
                 break;
             }
         break;
+
+        case U:
+        switch(opcode){
+            case 0x37: // LUI
+                c.reg[rd] = imm;
+            break;
+            case 0x17: // AUIPC
+                c.reg[rd] = c.pc + imm;
+            break;
+        }
+        break;
+
+        case SB:
+            switch(func3){
+                case 0x0: //BEQ
+                    if(op1 == op2) c.pc = c.pc + imm;
+                    else c.pc = c.pc + 4;
+                break;
+                case 0x1: //BNE
+                    if(op1 != op2) c.pc = c.pc + imm;
+                    else c.pc = c.pc + 4;
+                break;
+                case 0x4: //BGE
+                    if((int32_t)op1 >= (int32_t)op2) c.pc = c.pc + imm;
+                    else c.pc = c.pc + 4;
+                break;
+                case 0x5: //BLT
+                    if((int32_t)op1 < (int32_t)op2) c.pc = c.pc + imm;
+                    else c.pc = c.pc + 4;
+                break;
+                case 0x6: //BLTU
+                    if(op1 < op2) c.pc = c.pc + imm;
+                    else c.pc = c.pc + 4;
+                break;
+                case 0x7: //BGEU
+                    if(op1 >= op2) c.pc = c.pc + imm;
+                    else c.pc = c.pc + 4;
+                break;
+            }
+        break;
+
+        case UJ:
+            // JAL
+            c.reg[rd] = c.pc + 4;
+            c.pc = c.pc + imm;
+        break;
     }
+    
+    c.reg[0] = 0;
 }
