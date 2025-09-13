@@ -1,5 +1,7 @@
 #include "cpu.h"
 
+bool halt = false;
+
 // CPU constructor
 cpu::cpu(size_t mem_size) : memory(mem_size, 0) {}
 

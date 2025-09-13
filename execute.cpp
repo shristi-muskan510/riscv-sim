@@ -1,7 +1,11 @@
 #include "cpu.h"
+#include <iostream>
 
-void execute_instr(cpu &c, uint32_t opcode, uint32_t func3, uint32_t func7, uint32_t rd, uint32_t op1, uint32_t op2, int32_t imm, int format){
-    
+void execute_instr(cpu &c, uint32_t opcode, uint32_t func3, uint32_t func7, uint32_t rd, uint32_t op1, uint32_t op2, int32_t imm, int format, bool halt){
+    uint8_t val8;
+    uint16_t val16;
+    uint32_t ema = 0;
+
     switch(format){
 
         case R:
@@ -73,22 +77,22 @@ void execute_instr(cpu &c, uint32_t opcode, uint32_t func3, uint32_t func7, uint
                 case 0x03:
                     switch(func3){
                         case 0x0: // LB
-                            int8_t val8 = c.memory[op1];
+                            val8 = c.memory[op1];
                             c.reg[rd] = (int32_t)val8;
                         break;
                         case 0x4: // LBU
-                            uint8_t val8 = c.memory[op1];
+                            val8 = c.memory[op1];
                             c.reg[rd] = (uint32_t)val8;
                         break;
                         case 0x1: //LH
-                            int16_t val16 = 0;
+                            val16 = 0;
                             for(int i=0; i<2; i++){
                                 val16 |= c.memory[op1+i] << (8*i);
                             }
                             c.reg[rd] = (int32_t)val16;
                         break;
                         case 0x5: //LHU
-                            uint16_t val16 = 0;
+                            val16 = 0;
                             for(int i=0; i<2; i++){
                                 val16 |= (c.memory[op1+i] << (8*i));
                             }
@@ -110,7 +114,6 @@ void execute_instr(cpu &c, uint32_t opcode, uint32_t func3, uint32_t func7, uint
         break;
 
         case S:
-        uint32_t ema = 0;
             switch(func3){
                 case 0x0: // SB
                 ema = op2 + imm;
@@ -176,7 +179,14 @@ void execute_instr(cpu &c, uint32_t opcode, uint32_t func3, uint32_t func7, uint
             c.reg[rd] = c.pc + 4;
             c.pc = c.pc + imm;
         break;
+
+        default: // SYSTEM instructions
+            if (imm == 1) {
+                cout << "EBREAK: halting.\n";
+                halt = true;
+            }
+    break;
     }
-    
+
     c.reg[0] = 0;
 }

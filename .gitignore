@@ -1,1 +1,5 @@
 test.s
+test.elf
+test.bin
+test.o
+riscv_sim

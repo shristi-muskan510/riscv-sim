@@ -4,7 +4,7 @@ void decode_instr(cpu &c, uint32_t instr){
     // 1. Split the instructions in all possible parts.
     uint32_t opcode = instr & 0x7F;
     uint32_t rd = (instr >> 7) & 0x1F;
-    uint32_t func3 = (instr >> 12) & 0x05;
+    uint32_t func3 = (instr >> 12) & 0x7;
     uint32_t rs1 = (instr >> 15) & 0x1F;
     uint32_t rs2 = (instr >> 20) & 0x1F;
     uint32_t func7 = (instr >> 25) & 0x7F;
@@ -61,5 +61,5 @@ void decode_instr(cpu &c, uint32_t instr){
         op2 = c.reg[rs2];
     }
 
-    execute_instr(c, opcode, func3, func7, rd, op1, op2, imm, format);
+    execute_instr(c, opcode, func3, func7, rd, op1, op2, imm, format, halt);
 }
