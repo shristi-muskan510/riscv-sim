@@ -3,3 +3,4 @@ test.elf
 test.bin
 test.o
 riscv_sim
+.DS_Store
