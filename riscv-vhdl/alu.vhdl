@@ -34,19 +34,21 @@ architecture rtl of alu is
                         res := (others => '0');
                     end if;
                 when "0101" => res := signed(op1) xor signed(op2); -- XOR/XORI
-                when "0110" => res := shift_right(unsigned(op1), to_integer(unsigned(op2(4 downto 0)))); -- SRL/SRLI
+                when "0110" => res := signed( shift_right(unsigned(op1), to_integer(unsigned(op2(4 downto 0)))) ); -- SRL/SRLI
                 when "0111" => res := shift_right(signed(op1), to_integer(unsigned(op2(4 downto 0)))); -- SRA/SRAI
                 when "1000" => res := signed(op1) or signed(op2); -- OR/ORI
                 when "1001" => res := signed(op1) and signed(op2); -- AND/ANDI
+                when others => res := (others => '0');
             end case;
 
             alu_result <= std_logic_vector(res);
 
+            -- zero flag for branch instr.
             if res = 0 then
                 zero <= '1';
             else
                 zero <= '0';
             end if;
         end process;
-end architecture;
+end rtl;
 

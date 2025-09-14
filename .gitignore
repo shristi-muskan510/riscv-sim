@@ -1,6 +1,17 @@
+# riscv-sim
 test.s
 test.elf
 test.bin
 test.o
 riscv_sim
+
+# GHDL build artifacts
+*.o
+*.cf
+work-obj93.cf
+*.vcd
+*.ghw
+*.fst
+
+# Mac specifi
 .DS_Store
