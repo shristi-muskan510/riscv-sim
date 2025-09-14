@@ -7,7 +7,7 @@ using namespace std;
 int main() {
     cpu myCPU(1024); // 1 KB memory
 
-    //load instructions
+    // load instructions
     ifstream file("test.bin", ios::binary);
     if (!file) {
         cerr << "Error opening program file\n";
@@ -15,6 +15,7 @@ int main() {
     }
     file.read(reinterpret_cast<char*>(myCPU.memory.data()), myCPU.memory.size());
 
+    // Loop for running the processor
     while(!halt){
         uint32_t instr = myCPU.fetch();
         decode_instr(myCPU, instr);

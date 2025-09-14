@@ -10,7 +10,6 @@ struct cpu {
     uint32_t pc = 0;         // program counter
     uint32_t reg[32] = {0};  // 32 registers
     vector<uint8_t> memory;  // byte-addressable memory
-    bool halt = false;
 
     cpu(size_t mem_size);
     uint32_t fetch();
