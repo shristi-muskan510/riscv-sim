@@ -33,13 +33,11 @@ begin
 
             -- S-type
             when "0100011" =>
-                imm <= std_logic_vector(resize(
-                        signed(instr(31 downto 25) & instr(11 downto 7)), 32));
+                imm <= std_logic_vector(resize(signed(instr(31 downto 25) & instr(11 downto 7)), 32));
 
             -- SB-type
             when "1100011" =>
-                imm <= std_logic_vector(resize(
-                        signed(instr(31) & instr(7) & instr(30 downto 25) & instr(11 downto 8) & "0"), 32));
+                imm <= std_logic_vector(resize(signed(instr(31) & instr(7) & instr(30 downto 25) & instr(11 downto 8) & "0"), 32));
 
             -- U-type
             when "0110111" | "0010111" =>
@@ -47,8 +45,7 @@ begin
 
             -- UJ-type
             when "1101111" =>
-                imm <= std_logic_vector(resize(
-                        signed(instr(31) & instr(19 downto 12) & instr(20) & instr(30 downto 21) & "0"), 32));
+                imm <= std_logic_vector(resize(signed(instr(31) & instr(19 downto 12) & instr(20) & instr(30 downto 21) & "0"), 32));
 
             when others =>
                 imm <= (others => '0');
