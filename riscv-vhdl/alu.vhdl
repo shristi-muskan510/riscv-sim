@@ -7,13 +7,14 @@ entity alu is
          op2: in std_logic_vector(31 downto 0);
          alu_s: in std_logic_vector(3 downto 0);
          alu_result: out std_logic_vector(31 downto 0);
-         zero: out std_logic);
+         isBranchTaken: out std_logic);
 end alu;
 
 architecture rtl of alu is
     begin
         process(op1, op2, alu_s)
         variable res : signed(31 downto 0);
+        variable zero: std_logic;
         begin
             case alu_s is
                 when "0000" => res := signed(op1) + signed(op2); -- ADD/ADDI/(EMA for load store operations , or keep it seprate???)
@@ -44,6 +45,8 @@ architecture rtl of alu is
             alu_result <= std_logic_vector(res);
 
             -- zero flag for branch instr.
+            -- Yet to use zero flag for computing isBranchTaken signal.
+            -- Do it.
             if res = 0 then
                 zero <= '1';
             else
