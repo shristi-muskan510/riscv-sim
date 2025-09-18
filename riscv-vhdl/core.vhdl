@@ -34,7 +34,24 @@ architecture rtl of core is
     signal alu_result: std_logic_vector(31 downto 0);
     signal isBranchTaken: std_logic;
 
+    -- Data memory
+    signal data_mem_out: std_logic_vector(31 downto 0);
+
+    -- MUX signals
+    signal a_mux: std_logic_vector(31 downto 0);
+    signal result_mux: std_logic_vector(31 downto 0);
+    signal pc_plus4: std_logic_vector(31 downto 0);
+    signal pc_branch: std_logic_vector(31 downto 0);
+
 begin
+
+    -- MUX Logics
+    a_mux <= imm when isImm = '1' else rd2;
+    result_mux <= data_mem_out when isLd = '1' else alu_result;
+    pc_plus4  <= std_logic_vector(unsigned(pc_curr) + 4);
+    pc_branch <= std_logic_vector(unsigned(pc_curr) + unsigned(imm));
+    pc_next <= pc_branch when (isBranch = '1' and isBranchTaken = '1') else pc_plus4;
+
     pc_inst: entity work.pc
         port map (
             clk => clk,
@@ -69,7 +86,7 @@ begin
             rs1 => rs1,
             rs2 => rs2,
             rd => rd,
-            wd => alu_result,
+            wd => result_mux,
             rd1 => rd1,
             rd2 => rd2,
         );
@@ -96,6 +113,13 @@ begin
             isBranch => isBranch
         );
 
-    pc_next <= std_logic_vector(unsigned(pc_curr) + 4);
+    dmem_inst: entity work.data_mem
+        port map(
+            clk => clk, 
+            address => result_mux,
+            we => isSt,
+            wd => rd2,
+            rd => data_mem_out
+        );
 
 end rtl;

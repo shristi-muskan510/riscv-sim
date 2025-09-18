@@ -85,6 +85,11 @@ begin
             isImm <= '1';
             alu_s <= "0000";
 
+            when "0010111" => -- (AUIPC)
+            isWb  <= '1';
+            isImm <= '1';
+            alu_s <= "0000";
+
             when "1100011" => -- SB Format
             isBranch <= '1';
             isImm <= '0';
