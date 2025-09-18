@@ -12,11 +12,11 @@ end instr_mem;
 architecture rtl of instr_mem is
     type memory is array (0 to 255) of std_logic_vector(31 downto 0);
     signal rom:  -- Some sample instructions
-        memory := ( 0 => x"00000013",
-                    1 => x"00100093", 
-                    2 => x"00200113", 
-                    3 => x"00308193",
-                    4 => x"00418213");
+        memory := ( 0 => x"00500093", -- addi x1, x0, 5
+                    1 => x"00A00113", -- addi x2, x0, 10
+                    2 => x"002081B3", -- add x3, x1, x2
+                    3 => x"00302023", -- sw x3, 0(x0)
+                    4 => x"00002203"); -- lw x4, 0(x0)
 begin
     process(clk)
     begin

@@ -94,12 +94,12 @@ begin
             isBranch <= '1';
             isImm <= '0';
             case func3 is
-                when "000" => alu_s <= "0001";
-                when "001" => alu_s <= "0001";
-                when "101" => alu_s <= "0011";
-                when "100" => alu_s <= "0011";
-                when "110" => alu_s <= "0100";
-                when "111" => alu_s <= "0100";
+                when "000" => alu_s <= "1010";
+                when "001" => alu_s <= "1011";
+                when "101" => alu_s <= "1100";
+                when "100" => alu_s <= "1101";
+                when "110" => alu_s <= "1110";
+                when "111" => alu_s <= "1111";
             end case;
         end case; 
     end process;
