@@ -22,7 +22,7 @@ begin
         isLd <= '0';
         isSt <= '0';
         isImm <= '0';
-        alu_s <= '0000';
+        alu_s <= "0000";
         isBranch <= '0';
 
         case opcode is
@@ -48,6 +48,7 @@ begin
                     end if;
                 when "110" => alu_s <= "1000";
                 when "111" => alu_s <= "1001";
+                when others => alu_s <= "1111";
             end case;
 
             when "0010011" => -- I Format
@@ -67,6 +68,7 @@ begin
                     end if;
                 when "110" => alu_s <= "1000";
                 when "111" => alu_s <= "1001";
+                when others => alu_s <= "1111";
             end case;
 
             when "0000011" =>
@@ -100,7 +102,15 @@ begin
                 when "100" => alu_s <= "1101";
                 when "110" => alu_s <= "1110";
                 when "111" => alu_s <= "1111";
+                when others => alu_s <= "0000";
             end case;
+
+            when others =>      -- Anything else = NOP
+                isWb <= '0';
+                isImm <= '0';
+                isSt  <= '0';
+                isLd <= '0';
+                alu_s    <= "0000";
         end case; 
     end process;
 end rtl;

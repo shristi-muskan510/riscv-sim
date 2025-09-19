@@ -7,7 +7,9 @@ entity data_mem is
          address: in std_logic_vector(31 downto 0);
          we: in std_logic;
          wd: in std_logic_vector(31 downto 0);
-         rd: out std_logic_vector(31 downto 0));
+         rd: out std_logic_vector(31 downto 0);
+         --
+         dbg_mem0 : out std_logic_vector(31 downto 0));
 end data_mem;
 
 architecture rtl of  data_mem is
@@ -21,8 +23,12 @@ begin
             if  we = '1' then
                 ram(to_integer(unsigned(address(9 downto 2)))) <= wd;
             end if;
-            -- read
-            rd <= ram(to_integer(unsigned(address(9 downto 2))));
         end if;
     end process;
+
+    -- read
+            rd <= ram(to_integer(unsigned(address(9 downto 2))));
+
+    -- Debug tap
+    dbg_mem0 <= ram(0);
 end rtl;

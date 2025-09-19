@@ -16,7 +16,8 @@ architecture rtl of instr_mem is
                     1 => x"00A00113", -- addi x2, x0, 10
                     2 => x"002081B3", -- add x3, x1, x2
                     3 => x"00302023", -- sw x3, 0(x0)
-                    4 => x"00002203"); -- lw x4, 0(x0)
+                    4 => x"00002203",
+                    others => (others => '0')); -- lw x4, 0(x0)
 begin
     process(clk)
     begin

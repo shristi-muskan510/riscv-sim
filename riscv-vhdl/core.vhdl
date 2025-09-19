@@ -4,7 +4,12 @@ use ieee.numeric_std.all;
 
 entity core is
     port(clk   : in std_logic;
-         reset : in std_logic
+         reset : in std_logic;
+         dbg_x1  : out std_logic_vector(31 downto 0);
+         dbg_x2  : out std_logic_vector(31 downto 0);
+         dbg_x3  : out std_logic_vector(31 downto 0);
+         dbg_x4  : out std_logic_vector(31 downto 0);
+         dbg_mem0: out std_logic_vector(31 downto 0)
     );
 end entity core;
 
@@ -48,7 +53,7 @@ begin
     -- MUX Logics
     a_mux <= imm when isImm = '1' else rd2;
     result_mux <= data_mem_out when isLd = '1' else alu_result;
-    pc_plus4  <= std_logic_vector(unsigned(pc_curr) + 4);
+    pc_plus4  <= std_logic_vector(unsigned(pc_curr) + to_unsigned(4, 32));
     pc_branch <= std_logic_vector(unsigned(pc_curr) + unsigned(imm));
     pc_next <= pc_branch when (isBranch = '1' and isBranchTaken = '1') else pc_plus4;
 
@@ -79,7 +84,7 @@ begin
             imm => imm
         );
 
-    register_inst: entity work.register
+    regfile_inst: entity work.regfile
         port map (
             clk => clk,
             we => isWb,
@@ -89,6 +94,10 @@ begin
             wd => result_mux,
             rd1 => rd1,
             rd2 => rd2,
+            dbg_x1 => dbg_x1,
+            dbg_x2 => dbg_x2,
+            dbg_x3 => dbg_x3,
+            dbg_x4 => dbg_x4
         );
 
     alu_inst: entity work.alu
@@ -116,10 +125,11 @@ begin
     dmem_inst: entity work.data_mem
         port map(
             clk => clk, 
-            address => result_mux,
+            address => alu_result,
             we => isSt,
             wd => rd2,
-            rd => data_mem_out
+            rd => data_mem_out,
+            dbg_mem0 => dbg_mem0
         );
 
 end rtl;
