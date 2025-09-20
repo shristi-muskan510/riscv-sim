@@ -12,12 +12,13 @@ end alu;
 
 architecture rtl of alu is
     begin
+        -- isBranchTaken <= '0';
         process(op1, op2, alu_s)
         variable res : signed(31 downto 0);
         variable zero: std_logic;
         begin
-            res := (others => '0');
             isBranchTaken <= '0';
+            res := (others => '0');
             case alu_s is
                 when "0000" => res := signed(op1) + signed(op2); -- ADD/ADDI/(EMA for load store operations , or keep it seprate???)
                 when "0001" => res := signed(op1) - signed(op2); -- SUB

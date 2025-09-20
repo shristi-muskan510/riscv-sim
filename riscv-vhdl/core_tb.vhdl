@@ -6,65 +6,94 @@ entity core_tb is
 end entity;
 
 architecture sim of core_tb is
+    -- Clock and reset
     signal clk   : std_logic := '0';
     signal reset : std_logic := '1';
+
+    -- Debug outputs from core
     signal dbg_x1   : std_logic_vector(31 downto 0);
     signal dbg_x2   : std_logic_vector(31 downto 0);
     signal dbg_x3   : std_logic_vector(31 downto 0);
     signal dbg_x4   : std_logic_vector(31 downto 0);
     signal dbg_mem0 : std_logic_vector(31 downto 0);
+    signal dbg_pc   : std_logic_vector(31 downto 0);
 
-    -- Instantiate DUT
-    component core
-        port(
-            clk   : in std_logic;
-            reset : in std_logic;
-            dbg_x1  : out std_logic_vector(31 downto 0);
-            dbg_x2  : out std_logic_vector(31 downto 0);
-            dbg_x3  : out std_logic_vector(31 downto 0);
-            dbg_x4  : out std_logic_vector(31 downto 0);
-            dbg_mem0: out std_logic_vector(31 downto 0)
-        );
-    end component;
-
+    -- Core internal signals for diagnostics
+    signal pc_curr : std_logic_vector(31 downto 0);
+    signal pc_next   : std_logic_vector(31 downto 0);
+    signal pc_plus4  : std_logic_vector(31 downto 0);
+    signal pc_branch : std_logic_vector(31 downto 0);
+    signal isBranch  : std_logic;
+    signal isBranchTaken : std_logic;
 begin
+
     -- Clock generator: 10 ns period
     clk <= not clk after 5 ns;
 
-    -- DUT instance
-    uut: core
+    -- Instantiate instruction memory
+    instr_mem_inst: entity work.instr_mem
+        port map (
+            clk => clk,
+            pc  => dbg_pc
+        );
+
+    -- Instantiate your core
+    uut: entity work.core
         port map (
             clk      => clk,
             reset    => reset,
             dbg_x1   => dbg_x1,
             dbg_x2   => dbg_x2,
             dbg_x3   => dbg_x3,
-            dbg_x4   => dbg_x4,
-            dbg_mem0 => dbg_mem0
+            dbg_x4    => dbg_x4,
+            dbg_mem0 => dbg_mem0,
+            dbg_pc   => dbg_pc,
+            -- Optional: internal diagnostic signals, if core exposes them
+            pc_next => pc_next,
+            pc_plus4 => pc_plus4,
+            pc_branch => pc_branch,
+            isBranch => isBranch,
+            isBranchTaken => isBranchTaken
         );
 
     -- Stimulus process
     stim_proc: process
     begin
-        -- Hold reset for a few cycles
+        -- Apply reset
         reset <= '1';
         wait for 20 ns;
         reset <= '0';
 
-        -- Let the CPU run for some cycles
+        -- Let CPU run for enough cycles
         wait for 200 ns;
 
+        -- Assertions
         assert unsigned(dbg_x1) = 5 report "X1 mismatch" severity error;
-
-        assert unsigned(dbg_x2) = 10 report "X2 mismatch" severity error;
-
-        assert unsigned(dbg_x3) = 15 report "X3 mismatch" severity error;
-
-        assert unsigned(dbg_mem0) = 15 report "MEM0 mismatch" severity error;
-
-        assert unsigned(dbg_x4) = 15 report "X4 mismatch" severity error;
+        assert unsigned(dbg_x2) = 5 report "X2 mismatch" severity error;
+        assert unsigned(dbg_x3) = 0 report "X3 mismatch" severity error;
+        assert unsigned(dbg_x4) = 10 report "X4 mismatch" severity error;
+        assert unsigned(dbg_mem0) = 10 report "MEM0 mismatch" severity error;
 
         report "All checks passed!" severity note;
         std.env.stop;
     end process;
+
+    -- PC and branch monitoring process
+    pc_monitor: process(clk)
+    begin
+        if rising_edge(clk) then
+            report "PC debug: pc_curr = " & integer'image(to_integer(unsigned(dbg_pc))) &
+       " | pc_plus4 = " & integer'image(to_integer(unsigned(pc_plus4))) &
+       " | pc_branch = " & integer'image(to_integer(unsigned(pc_branch))) &
+       " | pc_next = " & integer'image(to_integer(unsigned(pc_next))) &
+       " | isBranch = " & std_logic'image(isBranch) &
+       " | isBranchTaken = " & std_logic'image(isBranchTaken)  &
+                   " | x1 = " & integer'image(to_integer(unsigned(dbg_x1))) &
+                   " | x2 = " & integer'image(to_integer(unsigned(dbg_x2))) &
+                   " | x3 = " & integer'image(to_integer(unsigned(dbg_x3))) &
+                   " | x4 = " & integer'image(to_integer(unsigned(dbg_x4))) &
+                   " | mem[0] = " & integer'image(to_integer(unsigned(dbg_mem0)));
+        end if;
+    end process;
+
 end architecture;

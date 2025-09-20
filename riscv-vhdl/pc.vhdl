@@ -23,7 +23,6 @@ begin
                 pc_reg <= pc_next;
             end if;
         end if;
-
-        pc_curr <= pc_reg;
     end process;
+    pc_curr <= pc_reg;
 end rtl;
