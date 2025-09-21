@@ -10,6 +10,7 @@ entity control is
          isLd: out std_logic;
          isSt: out std_logic;
          isImm: out std_logic;
+         isSB: out std_logic;
          alu_s: out std_logic_vector(3 downto 0);
          isBranch: out std_logic);
 end control;
@@ -24,6 +25,7 @@ begin
         isImm <= '0';
         alu_s <= "0000";
         isBranch <= '0';
+        isSB <= '0';
 
         case opcode is
             when "0110011" => -- R Format
@@ -95,13 +97,17 @@ begin
             when "1100011" => -- SB Format
             isBranch <= '1';
             isImm <= '0';
-            
+
+            when "1101111" => -- UJ Format (JAL)
+            isSB <= '1';
+            isWb <= '1';
+
             when others =>      -- Anything else = NOP
                 isWb <= '0';
                 isImm <= '0';
                 isSt  <= '0';
                 isLd <= '0';
-                alu_s    <= "0000";
+                alu_s  <= "1111";
         end case; 
     end process;
 end rtl;

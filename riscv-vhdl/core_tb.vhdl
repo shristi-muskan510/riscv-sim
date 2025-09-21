@@ -68,11 +68,11 @@ begin
         wait for 100 ns;
 
         -- Assertions
-        assert unsigned(dbg_x1) = 5 report "X1 mismatch" severity error;
-        assert unsigned(dbg_x2) = 5 report "X2 mismatch" severity error;
-        assert unsigned(dbg_x3) = 10 report "Branch jumped" severity error;
-        assert unsigned(dbg_x4) = 10 report "X4 mismatch" severity error;
-        assert unsigned(dbg_mem0) = 10 report "MEM0 mismatch" severity error;
+        assert unsigned(dbg_x1) = 25 report "X1 mismatch" severity error;
+        assert unsigned(dbg_x2) = 8 report "X2 mismatch" severity error;
+        assert unsigned(dbg_x3) = 20 report "Branch jumped" severity error;
+        assert unsigned(dbg_x4) = 0 report "X4 mismatch" severity error;
+        assert unsigned(dbg_mem0) = 0 report "MEM0 mismatch" severity error;
 
         report "All checks passed!" severity note;
         std.env.stop;

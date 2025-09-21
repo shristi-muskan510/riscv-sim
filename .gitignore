@@ -1,9 +1,10 @@
 # riscv-sim
-test.s
-test.elf
-test.bin
-test.o
+*.s
+*.elf
+*.bin
+*.o
 riscv_sim
+*.hex
 
 # GHDL build artifacts
 *.o

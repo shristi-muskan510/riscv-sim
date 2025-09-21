@@ -14,6 +14,7 @@ entity core is
          pc_next : out std_logic_vector(31 downto 0);
          pc_plus4 : out std_logic_vector(31 downto 0);
          pc_branch : out std_logic_vector(31 downto 0);
+         pc_jump: out std_logic_vector(31 downto 0);
          isBranch : out std_logic;
          isBranchTaken : out std_logic
     );
@@ -38,7 +39,7 @@ architecture rtl of core is
     signal rd1, rd2: std_logic_vector(31 downto 0);
 
     -- Control Unit
-    signal isImm, isWb, isLd, isSt: std_logic;
+    signal isImm, isSB, isWb, isLd, isSt: std_logic;
     signal alu_s: std_logic_vector(3 downto 0);
 
     -- ALU
@@ -58,54 +59,76 @@ begin
 
     -- MUX Logics
     a_mux <= imm when isImm = '1' else rd2;
-    result_mux <= data_mem_out when isLd = '1' else alu_result;
+
     pc_plus4  <= std_logic_vector(unsigned(dbg_pc) + to_unsigned(4, 32));
     pc_branch <= std_logic_vector(signed(dbg_pc) + signed(imm));
+    pc_jump <= std_logic_vector(signed (dbg_pc)+ signed(imm));
+
+    process(data_mem_out, alu_result, isLd)
+    begin
+        if isLd = '1' then
+            result_mux <= data_mem_out;
+        elsif isSB = '1' then
+            result_mux <= pc_plus4;
+        else
+            result_mux <= alu_result;
+        end if;
+    end process;
 
     -- Combinational branch decision
-process(opcode, func3, rd1, rd2)
-begin
-    isBranchTaken <= '0';  -- default
+    process(opcode, func3, rd1, rd2)
+    begin
+        isBranchTaken <= '0';  -- default
 
-    if opcode = "1100011" then  -- SB-type (branches)
-        case func3 is
-            when "000" =>  -- BEQ
-                if signed(rd1) = signed(rd2) then
-                    isBranchTaken <= '1';
-                end if;
+        if opcode = "1100011" then  -- SB-type (branches)
+            case func3 is
+                when "000" =>  -- BEQ
+                    if signed(rd1) = signed(rd2) then
+                        isBranchTaken <= '1';
+                    end if;
 
-            when "001" =>  -- BNE
-                if signed(rd1) /= signed(rd2) then
-                    isBranchTaken <= '1';
-                end if;
+                when "001" =>  -- BNE
+                    if signed(rd1) /= signed(rd2) then
+                        isBranchTaken <= '1';
+                    end if;
 
-            when "100" =>  -- BLT
-                if signed(rd1) < signed(rd2) then
-                    isBranchTaken <= '1';
-                end if;
+                when "100" =>  -- BLT
+                    if signed(rd1) < signed(rd2) then
+                        isBranchTaken <= '1';
+                    end if;
 
-            when "101" =>  -- BGE
-                if signed(rd1) >= signed(rd2) then
-                    isBranchTaken <= '1';
-                end if;
+                when "101" =>  -- BGE
+                    if signed(rd1) >= signed(rd2) then
+                        isBranchTaken <= '1';
+                    end if;
 
-            when "110" =>  -- BLTU
-                if unsigned(rd1) < unsigned(rd2) then
-                    isBranchTaken <= '1';
-                end if;
+                when "110" =>  -- BLTU
+                    if unsigned(rd1) < unsigned(rd2) then
+                        isBranchTaken <= '1';
+                    end if;
 
-            when "111" =>  -- BGEU
-                if unsigned(rd1) >= unsigned(rd2) then
-                    isBranchTaken <= '1';
-                end if;
+                when "111" =>  -- BGEU
+                    if unsigned(rd1) >= unsigned(rd2) then
+                        isBranchTaken <= '1';
+                    end if;
 
-            when others =>
-                isBranchTaken <= '0';
-        end case;
-    end if;
-end process;
+                when others =>
+                    isBranchTaken <= '0';
+            end case;
+        end if;
+    end process;
 
-    pc_next <= pc_branch when isBranchTaken = '1' else pc_plus4;
+    -- PC update logic
+    process(pc_plus4, pc_branch, pc_jump, isBranchTaken, isSB)
+    begin
+        if isBranchTaken = '1' then
+            pc_next <= pc_branch;
+        elsif isSB = '1' then
+            pc_next <= pc_jump;
+        else
+            pc_next <= pc_plus4;
+        end if;
+    end process;
 
     pc_inst: entity work.pc
         port map (
@@ -167,6 +190,7 @@ end process;
             isLd => isLd,
             isSt => isSt,
             isImm => isImm,
+            isSB => isSB,
             alu_s => alu_s,
             isBranch => isBranch
         );
