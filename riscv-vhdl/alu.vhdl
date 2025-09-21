@@ -6,18 +6,15 @@ entity alu is
     port(op1: in std_logic_vector(31 downto 0);
          op2: in std_logic_vector(31 downto 0);
          alu_s: in std_logic_vector(3 downto 0);
-         alu_result: out std_logic_vector(31 downto 0);
-         isBranchTaken: out std_logic);
+         alu_result: out std_logic_vector(31 downto 0));
 end alu;
 
 architecture rtl of alu is
     begin
-        -- isBranchTaken <= '0';
         process(op1, op2, alu_s)
         variable res : signed(31 downto 0);
         variable zero: std_logic;
         begin
-            isBranchTaken <= '0';
             res := (others => '0');
             case alu_s is
                 when "0000" => res := signed(op1) + signed(op2); -- ADD/ADDI/(EMA for load store operations , or keep it seprate???)
@@ -42,18 +39,6 @@ architecture rtl of alu is
                 when "0111" => res := shift_right(signed(op1), to_integer(unsigned(op2(4 downto 0)))); -- SRA/SRAI
                 when "1000" => res := signed(op1) or signed(op2); -- OR/ORI
                 when "1001" => res := signed(op1) and signed(op2); -- AND/ANDI
-                when "1010" => -- BEQ
-                        isBranchTaken <= '1' when signed(op1) = signed(op2) else '0';
-                when "1011" => -- BNQ
-                        isBranchTaken <= '0' when signed(op1) = signed(op2) else '1';
-                when "1100" => -- BGE
-                        isBranchTaken <= '0' when signed(op1) < signed(op2) else '1';
-                when "1101" => -- BLT
-                        isBranchTaken <= '1' when signed(op1) < signed(op2) else '0';
-                when "1110" => -- BGEU
-                        isBranchTaken <= '0' when unsigned(op1) < unsigned(op2) else '1';
-                when "1111" => -- BLTU
-                        isBranchTaken <= '1' when unsigned(op1) < unsigned(op2) else '0';
                 when others => res := (others => '0');
             end case;
 

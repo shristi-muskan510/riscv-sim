@@ -5,16 +5,16 @@ use ieee.numeric_std.all;
 entity core is
     port(clk   : in std_logic;
          reset : in std_logic;
-         dbg_x1  : out std_logic_vector(31 downto 0);
-         dbg_x2  : out std_logic_vector(31 downto 0);
-         dbg_x3  : out std_logic_vector(31 downto 0);
+         dbg_x1 : out std_logic_vector(31 downto 0);
+         dbg_x2 : out std_logic_vector(31 downto 0);
+         dbg_x3 : out std_logic_vector(31 downto 0);
          dbg_x4 : out std_logic_vector(31 downto 0);
          dbg_mem0: out std_logic_vector(31 downto 0);
-         dbg_pc   : out std_logic_vector(31 downto 0);
-         pc_next   : out std_logic_vector(31 downto 0);
-         pc_plus4  : out std_logic_vector(31 downto 0);
+         dbg_pc : out std_logic_vector(31 downto 0);
+         pc_next : out std_logic_vector(31 downto 0);
+         pc_plus4 : out std_logic_vector(31 downto 0);
          pc_branch : out std_logic_vector(31 downto 0);
-         isBranch  : out std_logic;
+         isBranch : out std_logic;
          isBranchTaken : out std_logic
     );
 end entity core;
@@ -61,7 +61,51 @@ begin
     result_mux <= data_mem_out when isLd = '1' else alu_result;
     pc_plus4  <= std_logic_vector(unsigned(dbg_pc) + to_unsigned(4, 32));
     pc_branch <= std_logic_vector(signed(dbg_pc) + signed(imm));
-    pc_next <= pc_branch when (isBranch = '1' and isBranchTaken = '1') else pc_plus4;
+
+    -- Combinational branch decision
+process(opcode, func3, rd1, rd2)
+begin
+    isBranchTaken <= '0';  -- default
+
+    if opcode = "1100011" then  -- SB-type (branches)
+        case func3 is
+            when "000" =>  -- BEQ
+                if signed(rd1) = signed(rd2) then
+                    isBranchTaken <= '1';
+                end if;
+
+            when "001" =>  -- BNE
+                if signed(rd1) /= signed(rd2) then
+                    isBranchTaken <= '1';
+                end if;
+
+            when "100" =>  -- BLT
+                if signed(rd1) < signed(rd2) then
+                    isBranchTaken <= '1';
+                end if;
+
+            when "101" =>  -- BGE
+                if signed(rd1) >= signed(rd2) then
+                    isBranchTaken <= '1';
+                end if;
+
+            when "110" =>  -- BLTU
+                if unsigned(rd1) < unsigned(rd2) then
+                    isBranchTaken <= '1';
+                end if;
+
+            when "111" =>  -- BGEU
+                if unsigned(rd1) >= unsigned(rd2) then
+                    isBranchTaken <= '1';
+                end if;
+
+            when others =>
+                isBranchTaken <= '0';
+        end case;
+    end if;
+end process;
+
+    pc_next <= pc_branch when isBranchTaken = '1' else pc_plus4;
 
     pc_inst: entity work.pc
         port map (
@@ -111,8 +155,7 @@ begin
             op1 => rd1,
             op2 => a_mux,
             alu_s => alu_s,
-            alu_result => alu_result,
-            isBranchTaken => isBranchTaken
+            alu_result => alu_result
         );
 
     control_inst: entity work.control

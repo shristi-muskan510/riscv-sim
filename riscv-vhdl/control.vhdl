@@ -95,16 +95,7 @@ begin
             when "1100011" => -- SB Format
             isBranch <= '1';
             isImm <= '0';
-            case func3 is
-                when "000" => alu_s <= "1010";
-                when "001" => alu_s <= "1011";
-                when "101" => alu_s <= "1100";
-                when "100" => alu_s <= "1101";
-                when "110" => alu_s <= "1110";
-                when "111" => alu_s <= "1111";
-                when others => alu_s <= "0000";
-            end case;
-
+            
             when others =>      -- Anything else = NOP
                 isWb <= '0';
                 isImm <= '0';

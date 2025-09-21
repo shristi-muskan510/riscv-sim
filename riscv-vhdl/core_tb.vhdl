@@ -65,12 +65,12 @@ begin
         reset <= '0';
 
         -- Let CPU run for enough cycles
-        wait for 200 ns;
+        wait for 100 ns;
 
         -- Assertions
         assert unsigned(dbg_x1) = 5 report "X1 mismatch" severity error;
         assert unsigned(dbg_x2) = 5 report "X2 mismatch" severity error;
-        assert unsigned(dbg_x3) = 0 report "X3 mismatch" severity error;
+        assert unsigned(dbg_x3) = 10 report "Branch jumped" severity error;
         assert unsigned(dbg_x4) = 10 report "X4 mismatch" severity error;
         assert unsigned(dbg_mem0) = 10 report "MEM0 mismatch" severity error;
 
@@ -79,9 +79,10 @@ begin
     end process;
 
     -- PC and branch monitoring process
-    pc_monitor: process(clk)
-    begin
-        if rising_edge(clk) then
+    pc_monitor: process
+begin
+    wait until rising_edge(clk);
+    wait for 1 ns;
             report "PC debug: pc_curr = " & integer'image(to_integer(unsigned(dbg_pc))) &
        " | pc_plus4 = " & integer'image(to_integer(unsigned(pc_plus4))) &
        " | pc_branch = " & integer'image(to_integer(unsigned(pc_branch))) &
@@ -93,7 +94,6 @@ begin
                    " | x3 = " & integer'image(to_integer(unsigned(dbg_x3))) &
                    " | x4 = " & integer'image(to_integer(unsigned(dbg_x4))) &
                    " | mem[0] = " & integer'image(to_integer(unsigned(dbg_mem0)));
-        end if;
     end process;
 
 end architecture;

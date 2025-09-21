@@ -24,9 +24,6 @@ architecture rtl of regfile is
     signal regs: reg_array := (others => (others => '0'));  -- set every element of every register in array to 0;
 
 begin
-    -- Read logic
-        rd1 <= regs(to_integer(unsigned(rs1)));
-        rd2 <= regs(to_integer(unsigned(rs2)));
 
     -- Write logic
     process(clk)
@@ -37,6 +34,10 @@ begin
             end if;
         end if;
     end process;
+
+    -- Read logic
+        rd1 <= regs(to_integer(unsigned(rs1)));
+        rd2 <= regs(to_integer(unsigned(rs2)));
 
     -- Debug taps
     dbg_x1 <= regs(1);
