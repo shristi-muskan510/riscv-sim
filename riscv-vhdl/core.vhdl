@@ -8,7 +8,7 @@ entity core is
          dbg_x1 : out std_logic_vector(31 downto 0);
          dbg_x2 : out std_logic_vector(31 downto 0);
          dbg_x3 : out std_logic_vector(31 downto 0);
-         dbg_x4 : out std_logic_vector(31 downto 0);
+         dbg_x5 : out std_logic_vector(31 downto 0);
          dbg_mem0: out std_logic_vector(31 downto 0);
          dbg_pc : out std_logic_vector(31 downto 0);
          pc_next : out std_logic_vector(31 downto 0);
@@ -39,7 +39,7 @@ architecture rtl of core is
     signal rd1, rd2: std_logic_vector(31 downto 0);
 
     -- Control Unit
-    signal isImm, isSB, isWb, isLd, isSt: std_logic;
+    signal isImm, isSB, isU, isWb, isLd, isSt: std_logic;
     signal alu_s: std_logic_vector(3 downto 0);
 
     -- ALU
@@ -68,6 +68,8 @@ begin
     begin
         if isLd = '1' then
             result_mux <= data_mem_out;
+        elsif isU = '1' then
+            result_mux <= imm;
         elsif isSB = '1' then
             result_mux <= pc_plus4;
         else
@@ -170,7 +172,7 @@ begin
             dbg_x1 => dbg_x1,
             dbg_x2 => dbg_x2,
             dbg_x3 => dbg_x3,
-            dbg_x4 => dbg_x4
+            dbg_x5 => dbg_x5
         );
 
     alu_inst: entity work.alu
@@ -189,6 +191,7 @@ begin
             isWb => isWb,
             isLd => isLd,
             isSt => isSt,
+            isU => isU,
             isImm => isImm,
             isSB => isSB,
             alu_s => alu_s,

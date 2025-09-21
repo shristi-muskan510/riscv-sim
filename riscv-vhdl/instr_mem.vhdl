@@ -16,7 +16,8 @@ architecture rtl of instr_mem is
                     1 => x"0080016F", -- jal x2, +8      (4)
                     2 => x"00A08093", -- addi x1, x1, 10 (8)
                     3 => x"01408093", -- addi x1, x1, 20 (12)
-                    4 => x"000001EF", -- jal x3, +0      (16)
+                    -- 4 => x"000001EF", -- jal x3, +0      (16)
+                    4 => x"123452B7", -- lui x5, 0x12345
                     others => (others => '0')); 
 begin
             instr <= rom(to_integer(unsigned(pc(9 downto 2))));

@@ -11,6 +11,7 @@ entity control is
          isSt: out std_logic;
          isImm: out std_logic;
          isSB: out std_logic;
+         isU: out std_logic;
          alu_s: out std_logic_vector(3 downto 0);
          isBranch: out std_logic);
 end control;
@@ -23,7 +24,7 @@ begin
         isLd <= '0';
         isSt <= '0';
         isImm <= '0';
-        alu_s <= "0000";
+        alu_s <= "1111";
         isBranch <= '0';
         isSB <= '0';
 
@@ -85,9 +86,8 @@ begin
             alu_s <= "0000";
 
             when "0110111" => -- U Format (LUI)
+            isU <= '1';
             isWb <= '1';
-            isImm <= '1';
-            alu_s <= "0000";
 
             when "0010111" => -- (AUIPC)
             isWb  <= '1';
