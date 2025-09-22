@@ -11,7 +11,7 @@ entity regfile is
          wd: in std_logic_vector(31 downto 0);
          rd1: out std_logic_vector(31 downto 0);
          rd2: out std_logic_vector(31 downto 0);
-         -- 
+
          dbg_x1 : out std_logic_vector(31 downto 0);
          dbg_x2 : out std_logic_vector(31 downto 0);
          dbg_x3 : out std_logic_vector(31 downto 0);
@@ -46,4 +46,5 @@ begin
     dbg_x3 <= regs(3);
     dbg_x4 <= regs(4);
     dbg_x5 <= regs(5);
+
 end rtl;

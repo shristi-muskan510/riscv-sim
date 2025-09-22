@@ -9,24 +9,14 @@ entity core is
          dbg_x2 : out std_logic_vector(31 downto 0);
          dbg_x3 : out std_logic_vector(31 downto 0);
          dbg_x4 : out std_logic_vector(31 downto 0);
-         dbg_x5 : out std_logic_vector(31 downto 0);
-         dbg_mem0: out std_logic_vector(31 downto 0);
-         dbg_pc : out std_logic_vector(31 downto 0);
-         pc_next : out std_logic_vector(31 downto 0);
-         pc_plus4 : out std_logic_vector(31 downto 0);
-         pc_branch : out std_logic_vector(31 downto 0);
-         pc_jump: out std_logic_vector(31 downto 0);
-         isBranch : out std_logic;
-         isBranchTaken : out std_logic;
-         alu_result: out std_logic_vector(31 downto 0)
-        --  halt : out std_logic
+         dbg_x5 : out std_logic_vector(31 downto 0)
     );
 end entity core;
 
 architecture rtl of core is
     -- PC 
-    -- signal pc_next: std_logic_vector(31 downto 0);
-    -- signal pc_curr: std_logic_vector(31 downto 0);
+    signal pc_next: std_logic_vector(31 downto 0);
+    signal pc_curr: std_logic_vector(31 downto 0);
 
     -- Instr_mem
     signal instr: std_logic_vector(31 downto 0);
@@ -42,12 +32,12 @@ architecture rtl of core is
     signal rd1, rd2: std_logic_vector(31 downto 0);
 
     -- Control Unit
-    signal isImm, isUJ, isLUI, isAUIPC, ra, isWb, isLd, isSt: std_logic;
+    signal isImm, isUJ, isLUI, isAUIPC, ra, isWb, isLd, isSt, isBranch: std_logic;
     signal alu_s: std_logic_vector(3 downto 0);
 
     -- ALU
-    -- signal alu_result: std_logic_vector(31 downto 0);
-    -- signal isBranchTaken: std_logic;
+    signal alu_result: std_logic_vector(31 downto 0);
+    signal isBranchTaken: std_logic;
 
     -- Data memory
     signal data_mem_out: std_logic_vector(31 downto 0);
@@ -55,27 +45,18 @@ architecture rtl of core is
     -- MUX signals
     signal a_mux: std_logic_vector(31 downto 0);
     signal result_mux: std_logic_vector(31 downto 0);
-    -- signal pc_plus4: std_logic_vector(31 downto 0);
-    -- signal pc_branch: std_logic_vector(31 downto 0);
+    signal pc_plus4: std_logic_vector(31 downto 0);
+    signal pc_branch: std_logic_vector(31 downto 0);
+    signal pc_jump: std_logic_vector(31 downto 0);
 
 begin
-
-    -- process(instr)
-    -- begin
-    --     halt <= '0';
-    --     if instr = x"00100073" then   -- EBREAK
-    --         halt <= '1';
-    --     else
-    --         halt <= '0';
-    --     end if;
-    -- end process;
 
     -- MUX Logics
     a_mux <= imm when isImm = '1' else rd2;
 
-    pc_plus4  <= std_logic_vector(unsigned(dbg_pc) + to_unsigned(4, 32));
-    pc_branch <= std_logic_vector(signed(dbg_pc) + signed(imm));
-    pc_jump <= std_logic_vector(signed (dbg_pc)+ signed(imm));
+    pc_plus4  <= std_logic_vector(unsigned(pc_curr) + to_unsigned(4, 32));
+    pc_branch <= std_logic_vector(signed(pc_curr) + signed(imm));
+    pc_jump <= std_logic_vector(signed (pc_curr)+ signed(imm));
 
     process(data_mem_out, alu_result, isLd, isLUI, isAUIPC, isUJ)
     begin
@@ -84,7 +65,7 @@ begin
         elsif isLUI = '1' then
             result_mux <= imm;
         elsif isAUIPC = '1' then
-            result_mux <= std_logic_vector(signed(dbg_pc) + signed(imm));
+            result_mux <= std_logic_vector(signed(pc_curr) + signed(imm));
         elsif isUJ = '1' then
             result_mux <= pc_plus4;
         else
@@ -154,13 +135,13 @@ begin
             clk => clk,
             reset => reset,
             pc_next => pc_next,
-            pc_curr => dbg_pc
+            pc_curr => pc_curr
         );
 
     imem_inst: entity work.instr_mem
         port map (
             clk => clk,
-            pc => dbg_pc,
+            pc => pc_curr,
             instr => instr
         );
 
@@ -186,6 +167,7 @@ begin
             wd => result_mux,
             rd1 => rd1,
             rd2 => rd2,
+
             dbg_x1 => dbg_x1,
             dbg_x2 => dbg_x2,
             dbg_x3 => dbg_x3,
@@ -224,8 +206,7 @@ begin
             address => alu_result,
             we => isSt,
             wd => rd2,
-            rd => data_mem_out,
-            dbg_mem0 => dbg_mem0
+            rd => data_mem_out
         );
 
 end rtl;

@@ -17,7 +17,7 @@ architecture rtl of alu is
         begin
             res := (others => '0');
             case alu_s is
-                when "0000" => res := signed(op1) + signed(op2); -- ADD/ADDI/(EMA for load store operations , or keep it seprate???)
+                when "0000" => res := signed(op1) + signed(op2); -- ADD/ADDI/(EMA for load store)/(Return address for JAL)
                 when "0001" => res := signed(op1) - signed(op2); -- SUB
                 when "0010" => res := shift_left(signed(op1), to_integer(unsigned(op2(4 downto 0)))); -- SLL/SLLI
                 when "0011" => -- SLT/SLTI

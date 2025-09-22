@@ -79,13 +79,13 @@ begin
                 when others => alu_s <= "1111";
             end case;
 
-            when "0000011" =>
+            when "0000011" => -- (Load)
             isWb <= '1';
             isLd <= '1';
             isImm <= '1';
             alu_s <= "0000";
 
-            when "1100111" =>
+            when "1100111" => -- (JAL)
             isImm <= '1';
             isWb <= '1';
             ra <= '1';
@@ -112,7 +112,7 @@ begin
             isUJ <= '1';
             isWb <= '1';
 
-            when others =>      -- Anything else = NOP
+            when others => -- Anything else = NOP
                 isWb <= '0';
                 isImm <= '0';
                 isSt  <= '0';
