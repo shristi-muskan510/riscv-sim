@@ -14,6 +14,7 @@ architecture sim of core_tb is
     signal dbg_x1   : std_logic_vector(31 downto 0);
     signal dbg_x2   : std_logic_vector(31 downto 0);
     signal dbg_x3   : std_logic_vector(31 downto 0);
+    signal dbg_x4   : std_logic_vector(31 downto 0);
     signal dbg_x5   : std_logic_vector(31 downto 0);
     signal dbg_mem0 : std_logic_vector(31 downto 0);
     signal dbg_pc   : std_logic_vector(31 downto 0);
@@ -25,6 +26,8 @@ architecture sim of core_tb is
     signal pc_branch : std_logic_vector(31 downto 0);
     signal isBranch  : std_logic;
     signal isBranchTaken : std_logic;
+    signal alu_result: std_logic_vector(31 downto 0);
+    -- signal halt : std_logic;
 begin
 
     -- Clock generator: 10 ns period
@@ -45,6 +48,7 @@ begin
             dbg_x1   => dbg_x1,
             dbg_x2   => dbg_x2,
             dbg_x3   => dbg_x3,
+            dbg_x4   => dbg_x4,
             dbg_x5    => dbg_x5,
             dbg_mem0 => dbg_mem0,
             dbg_pc   => dbg_pc,
@@ -53,7 +57,9 @@ begin
             pc_plus4 => pc_plus4,
             pc_branch => pc_branch,
             isBranch => isBranch,
-            isBranchTaken => isBranchTaken
+            isBranchTaken => isBranchTaken,
+            alu_result => alu_result
+            -- halt => halt
         );
 
     -- Stimulus process
@@ -68,15 +74,25 @@ begin
         wait for 100 ns;
 
         -- Assertions
-        assert unsigned(dbg_x1) = 25 report "X1 mismatch" severity error;
-        assert unsigned(dbg_x2) = 8 report "X2 mismatch" severity error;
+        assert unsigned(dbg_x1) = 114 report "X1 mismatch" severity error;
+        assert unsigned(dbg_x2) = 16 report "X2 mismatch" severity error;
         assert unsigned(dbg_x3) = 0 report "Branch jumped" severity error;
-        assert unsigned(dbg_x5) = 305418240 report "X5 mismatch" severity error;
+        assert unsigned(dbg_x4) = 0 report "X4 mismatch" severity error;
+        assert unsigned(dbg_x5) = 8 report "X5 mismatch" severity error;
         assert unsigned(dbg_mem0) = 0 report "MEM0 mismatch" severity error;
 
         report "All checks passed!" severity note;
         std.env.stop;
     end process;
+
+    -- halt_monitor: process
+    -- begin
+    --     wait until rising_edge(clk);
+    --     if halt = '1' then
+    --         report "EBREAK executed. Stopping simulation" severity note;
+    --         std.env.stop;
+    --     end if;
+    -- end process;
 
     -- PC and branch monitoring process
     pc_monitor: process
@@ -92,7 +108,9 @@ begin
                    " | x1 = " & integer'image(to_integer(unsigned(dbg_x1))) &
                    " | x2 = " & integer'image(to_integer(unsigned(dbg_x2))) &
                    " | x3 = " & integer'image(to_integer(unsigned(dbg_x3))) &
+                   " | x4 = " & integer'image(to_integer(unsigned(dbg_x4))) &
                    " | x5 = " & integer'image(to_integer(unsigned(dbg_x5))) &
+                   " | alu_result = " & integer'image(to_integer(unsigned(alu_result))) &
                    " | mem[0] = " & integer'image(to_integer(unsigned(dbg_mem0)));
     end process;
 

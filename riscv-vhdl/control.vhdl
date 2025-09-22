@@ -10,8 +10,10 @@ entity control is
          isLd: out std_logic;
          isSt: out std_logic;
          isImm: out std_logic;
-         isSB: out std_logic;
-         isU: out std_logic;
+         isUJ: out std_logic;
+         isLUI: out std_logic;
+         isAUIPC: out std_logic;
+         ra: out std_logic;
          alu_s: out std_logic_vector(3 downto 0);
          isBranch: out std_logic);
 end control;
@@ -26,7 +28,10 @@ begin
         isImm <= '0';
         alu_s <= "1111";
         isBranch <= '0';
-        isSB <= '0';
+        isUJ <= '0';
+        isLUI <= '0';
+        isAUIPC <= '0';
+        ra <= '0';
 
         case opcode is
             when "0110011" => -- R Format
@@ -80,26 +85,31 @@ begin
             isImm <= '1';
             alu_s <= "0000";
 
+            when "1100111" =>
+            isImm <= '1';
+            isWb <= '1';
+            ra <= '1';
+            alu_s <= "0000";
+
             when "0100011" => -- S Format
             isSt <= '1';
             isImm <= '1';
             alu_s <= "0000";
 
             when "0110111" => -- U Format (LUI)
-            isU <= '1';
+            isLUI <= '1';
             isWb <= '1';
 
             when "0010111" => -- (AUIPC)
             isWb  <= '1';
-            isImm <= '1';
-            alu_s <= "0000";
+            isAUIPC <= '1';
 
             when "1100011" => -- SB Format
             isBranch <= '1';
             isImm <= '0';
 
             when "1101111" => -- UJ Format (JAL)
-            isSB <= '1';
+            isUJ <= '1';
             isWb <= '1';
 
             when others =>      -- Anything else = NOP

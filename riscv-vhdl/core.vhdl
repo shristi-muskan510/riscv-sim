@@ -8,6 +8,7 @@ entity core is
          dbg_x1 : out std_logic_vector(31 downto 0);
          dbg_x2 : out std_logic_vector(31 downto 0);
          dbg_x3 : out std_logic_vector(31 downto 0);
+         dbg_x4 : out std_logic_vector(31 downto 0);
          dbg_x5 : out std_logic_vector(31 downto 0);
          dbg_mem0: out std_logic_vector(31 downto 0);
          dbg_pc : out std_logic_vector(31 downto 0);
@@ -16,7 +17,9 @@ entity core is
          pc_branch : out std_logic_vector(31 downto 0);
          pc_jump: out std_logic_vector(31 downto 0);
          isBranch : out std_logic;
-         isBranchTaken : out std_logic
+         isBranchTaken : out std_logic;
+         alu_result: out std_logic_vector(31 downto 0)
+        --  halt : out std_logic
     );
 end entity core;
 
@@ -39,11 +42,11 @@ architecture rtl of core is
     signal rd1, rd2: std_logic_vector(31 downto 0);
 
     -- Control Unit
-    signal isImm, isSB, isU, isWb, isLd, isSt: std_logic;
+    signal isImm, isUJ, isLUI, isAUIPC, ra, isWb, isLd, isSt: std_logic;
     signal alu_s: std_logic_vector(3 downto 0);
 
     -- ALU
-    signal alu_result: std_logic_vector(31 downto 0);
+    -- signal alu_result: std_logic_vector(31 downto 0);
     -- signal isBranchTaken: std_logic;
 
     -- Data memory
@@ -57,6 +60,16 @@ architecture rtl of core is
 
 begin
 
+    -- process(instr)
+    -- begin
+    --     halt <= '0';
+    --     if instr = x"00100073" then   -- EBREAK
+    --         halt <= '1';
+    --     else
+    --         halt <= '0';
+    --     end if;
+    -- end process;
+
     -- MUX Logics
     a_mux <= imm when isImm = '1' else rd2;
 
@@ -64,13 +77,15 @@ begin
     pc_branch <= std_logic_vector(signed(dbg_pc) + signed(imm));
     pc_jump <= std_logic_vector(signed (dbg_pc)+ signed(imm));
 
-    process(data_mem_out, alu_result, isLd)
+    process(data_mem_out, alu_result, isLd, isLUI, isAUIPC, isUJ)
     begin
         if isLd = '1' then
             result_mux <= data_mem_out;
-        elsif isU = '1' then
+        elsif isLUI = '1' then
             result_mux <= imm;
-        elsif isSB = '1' then
+        elsif isAUIPC = '1' then
+            result_mux <= std_logic_vector(signed(dbg_pc) + signed(imm));
+        elsif isUJ = '1' then
             result_mux <= pc_plus4;
         else
             result_mux <= alu_result;
@@ -121,12 +136,14 @@ begin
     end process;
 
     -- PC update logic
-    process(pc_plus4, pc_branch, pc_jump, isBranchTaken, isSB)
+    process(pc_plus4, pc_branch, pc_jump, isBranchTaken, isUJ, result_mux)
     begin
         if isBranchTaken = '1' then
             pc_next <= pc_branch;
-        elsif isSB = '1' then
+        elsif isUJ = '1' then
             pc_next <= pc_jump;
+        elsif ra = '1' then
+            pc_next <= result_mux;
         else
             pc_next <= pc_plus4;
         end if;
@@ -172,6 +189,7 @@ begin
             dbg_x1 => dbg_x1,
             dbg_x2 => dbg_x2,
             dbg_x3 => dbg_x3,
+            dbg_x4 => dbg_x4,
             dbg_x5 => dbg_x5
         );
 
@@ -191,9 +209,11 @@ begin
             isWb => isWb,
             isLd => isLd,
             isSt => isSt,
-            isU => isU,
+            isLUI => isLUI,
+            isAUIPC => isAUIPC,
+            ra => ra,
             isImm => isImm,
-            isSB => isSB,
+            isUJ => isUJ,
             alu_s => alu_s,
             isBranch => isBranch
         );

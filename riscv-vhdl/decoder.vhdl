@@ -28,7 +28,7 @@ begin
     begin
         case instr(6 downto 0) is
             -- I-type
-            when "0010011" | "0000011" =>
+            when "0010011" | "0000011" | "1100111" =>
                 imm <= std_logic_vector(resize(signed(instr(31 downto 20)), 32));
 
             -- S-type
