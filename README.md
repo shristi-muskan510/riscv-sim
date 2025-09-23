@@ -21,6 +21,7 @@ The project follows the RV32I instruction set architecture (ISA) and gradually e
 2. make
 3. Run a test file (You can use the sample provided in test.s)
 
+---
 ## 🔹 Phase 2: VHDL (Non-Pipelined CPU)
 
 ### ✨ Features  
@@ -34,3 +35,12 @@ The project follows the RV32I instruction set architecture (ISA) and gradually e
 2. Go to riscv-vhdl folder
 3. Write some sample instructions (You can use the samples provided in instr.hex)
 4. make
+
+---
+## 🔮 Roadmap  
+
+- **Phase 3:** 5-stage **Pipelined CPU** in VHDL.  
+- **Phase 4:** Hazard detection and data forwarding.
+
+## Final Note
+This project was built as part of my exploration of **computer architecture** and **system design**. 
