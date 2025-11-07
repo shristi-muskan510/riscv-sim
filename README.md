@@ -19,7 +19,8 @@ The project follows the RV32I instruction set architecture (ISA) and gradually e
 ### ▶️ How to Run
 1. Go to riscv-sim folder
 2. make
-3. Run a test file (You can use the sample provided in test.s)
+3. make run
+4. Run a test file (You can use the sample provided in test.s)
 
 ---
 ## 🔹 Phase 2: VHDL (Non-Pipelined CPU)
