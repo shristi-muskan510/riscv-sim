@@ -40,7 +40,7 @@ begin
         rd1 <= regs(to_integer(unsigned(rs1)));
         rd2 <= regs(to_integer(unsigned(rs2)));
 
-    -- Debug taps
+    -- Debug taps --
     dbg_x1 <= regs(1);
     dbg_x2 <= regs(2);
     dbg_x3 <= regs(3);

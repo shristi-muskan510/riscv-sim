@@ -32,7 +32,7 @@ architecture rtl of core is
     signal rd1, rd2: std_logic_vector(31 downto 0);
 
     -- Control Unit
-    signal isImm, isUJ, isLUI, isAUIPC, ra, isWb, isLd, isSt, isBranch: std_logic;
+    signal isImm, ra, isWb, isLd, isSt, isBranch: std_logic;
     signal alu_s: std_logic_vector(3 downto 0);
 
     -- ALU
@@ -47,82 +47,14 @@ architecture rtl of core is
     signal result_mux: std_logic_vector(31 downto 0);
     signal pc_plus4: std_logic_vector(31 downto 0);
     signal pc_branch: std_logic_vector(31 downto 0);
-    signal pc_jump: std_logic_vector(31 downto 0);
 
 begin
 
-    -- MUX Logics
-    a_mux <= imm when isImm = '1' else rd2;
-
-    pc_plus4  <= std_logic_vector(unsigned(pc_curr) + to_unsigned(4, 32));
-    pc_branch <= std_logic_vector(signed(pc_curr) + signed(imm));
-    pc_jump <= std_logic_vector(signed (pc_curr)+ signed(imm));
-
-    process(data_mem_out, alu_result, isLd, isLUI, isAUIPC, isUJ)
-    begin
-        if isLd = '1' then
-            result_mux <= data_mem_out;
-        elsif isLUI = '1' then
-            result_mux <= imm;
-        elsif isAUIPC = '1' then
-            result_mux <= std_logic_vector(signed(pc_curr) + signed(imm));
-        elsif isUJ = '1' then
-            result_mux <= pc_plus4;
-        else
-            result_mux <= alu_result;
-        end if;
-    end process;
-
-    -- Combinational branch decision
-    process(opcode, func3, rd1, rd2)
-    begin
-        isBranchTaken <= '0';  -- default
-
-        if opcode = "1100011" then  -- SB-type (branches)
-            case func3 is
-                when "000" =>  -- BEQ
-                    if signed(rd1) = signed(rd2) then
-                        isBranchTaken <= '1';
-                    end if;
-
-                when "001" =>  -- BNE
-                    if signed(rd1) /= signed(rd2) then
-                        isBranchTaken <= '1';
-                    end if;
-
-                when "100" =>  -- BLT
-                    if signed(rd1) < signed(rd2) then
-                        isBranchTaken <= '1';
-                    end if;
-
-                when "101" =>  -- BGE
-                    if signed(rd1) >= signed(rd2) then
-                        isBranchTaken <= '1';
-                    end if;
-
-                when "110" =>  -- BLTU
-                    if unsigned(rd1) < unsigned(rd2) then
-                        isBranchTaken <= '1';
-                    end if;
-
-                when "111" =>  -- BGEU
-                    if unsigned(rd1) >= unsigned(rd2) then
-                        isBranchTaken <= '1';
-                    end if;
-
-                when others =>
-                    isBranchTaken <= '0';
-            end case;
-        end if;
-    end process;
-
-    -- PC update logic
+    -- PC update logic // [alu will give isBranchTaken and put in EX/MEM reg. direct connection to pc and updateion will happen. ig??]
     process(pc_plus4, pc_branch, pc_jump, isBranchTaken, isUJ, result_mux)
     begin
         if isBranchTaken = '1' then
             pc_next <= pc_branch;
-        elsif isUJ = '1' then
-            pc_next <= pc_jump;
         elsif ra = '1' then
             pc_next <= result_mux;
         else
@@ -140,7 +72,6 @@ begin
 
     imem_inst: entity work.instr_mem
         port map (
-            clk => clk,
             pc => pc_curr,
             instr => instr
         );
@@ -191,11 +122,8 @@ begin
             isWb => isWb,
             isLd => isLd,
             isSt => isSt,
-            isLUI => isLUI,
-            isAUIPC => isAUIPC,
             ra => ra,
             isImm => isImm,
-            isUJ => isUJ,
             alu_s => alu_s,
             isBranch => isBranch
         );

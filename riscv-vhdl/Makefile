@@ -2,7 +2,7 @@
 STD = --std=08
 SRC = src/pc.vhdl src/instr_mem.vhdl src/data_mem.vhdl src/regfile.vhdl src/alu.vhdl src/decoder.vhdl src/control.vhdl src/core.vhdl
 TB  = tb/core_tb.vhdl
-TOP = tb/core_tb
+TOP = core_tb
 
 all: run
 

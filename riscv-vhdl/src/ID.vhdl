@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity decoder is
+entity ID is
     port(instr: in std_logic_vector(31 downto 0);
          opcode  : out std_logic_vector(6 downto 0);
          rd      : out std_logic_vector(4 downto 0);
@@ -11,9 +11,9 @@ entity decoder is
          func3  : out std_logic_vector(2 downto 0);
          func7  : out std_logic_vector(6 downto 0);
          imm     : out std_logic_vector(31 downto 0));
-end decoder;
+end ID;
 
-architecture rtl of decoder is
+architecture rtl of ID is
 begin
     -- Extract possible combinations
     opcode <= instr(6 downto 0);

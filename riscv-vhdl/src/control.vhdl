@@ -6,15 +6,12 @@ entity control is
     port(opcode: in std_logic_vector(6 downto 0);
          func3: in std_logic_vector(2 downto 0);
          func7: in std_logic_vector(6 downto 0);
-         isWb: out std_logic;
-         isLd: out std_logic;
-         isSt: out std_logic;
-         isImm: out std_logic;
-         isUJ: out std_logic;
-         isLUI: out std_logic;
-         isAUIPC: out std_logic;
-         ra: out std_logic;
-         alu_s: out std_logic_vector(3 downto 0);
+         isWb: out std_logic;   -- Register writeback
+         isLd: out std_logic;   -- Load
+         isSt: out std_logic;   -- Store
+         isImm: out std_logic;  -- is Immediate being used
+         ra: out std_logic;     -- for return address
+         alu_s: out std_logic_vector(3 downto 0);   -- signal for alu operations
          isBranch: out std_logic);
 end control;
 
@@ -85,32 +82,41 @@ begin
             isImm <= '1';
             alu_s <= "0000";
 
-            when "1100111" => -- (JAL)
-            isImm <= '1';
-            isWb <= '1';
-            ra <= '1';
-            alu_s <= "0000";
-
             when "0100011" => -- S Format
             isSt <= '1';
             isImm <= '1';
             alu_s <= "0000";
 
             when "0110111" => -- U Format (LUI)
-            isLUI <= '1';
+            alu_s <= "1010";
             isWb <= '1';
 
             when "0010111" => -- (AUIPC)
             isWb  <= '1';
-            isAUIPC <= '1';
+            alu_s <= "1011";
 
             when "1100011" => -- SB Format
             isBranch <= '1';
             isImm <= '0';
+            case func3 is
+                when "000" => alu_s <= "0000"; --BEQ
+                when "001" => alu_s <= "0001"; --BNE
+                when "100" => alu_s <= "0010"; --BLT
+                when "101" => alu_s <= "0011"; --BGE
+                when "110" => alu_s <= "0100"; --BLTU
+                when "111" => alu_s <= "0101"; --BGEU
+                when others => alu_s <= "1111";
+            end case;
 
             when "1101111" => -- UJ Format (JAL)
-            isUJ <= '1';
+            alu_s <= "1100";
             isWb <= '1';
+
+            when "1100111" => -- (JALR)
+            isImm <= '1';
+            isWb <= '1';
+            ra <= '1';
+            alu_s <= "0000";
 
             when others => -- Anything else = NOP
                 isWb <= '0';
@@ -120,4 +126,5 @@ begin
                 alu_s  <= "1111";
         end case; 
     end process;
+
 end rtl;

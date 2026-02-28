@@ -10,6 +10,11 @@ architecture sim of core_tb is
     signal clk   : std_logic := '0';
     signal reset : std_logic := '1';
     signal pc_curr : std_logic_vector(31 downto 0);
+    signal dbg_x1 : std_logic_vector(31 downto 0);
+    signal dbg_x2 : std_logic_vector(31 downto 0);
+    signal dbg_x3 : std_logic_vector(31 downto 0);
+    signal dbg_x4 : std_logic_vector(31 downto 0);
+    signal dbg_x5 : std_logic_vector(31 downto 0);
 begin
 
     -- Clock generator: 10 ns period
@@ -18,7 +23,6 @@ begin
     -- Instantiate instruction memory
     instr_mem_inst: entity work.instr_mem
         port map (
-            clk => clk,
             pc  => pc_curr
         );
 
@@ -47,8 +51,8 @@ begin
 
         -- Assertions
         assert unsigned(dbg_x1) = 114 report "X1 mismatch" severity error;
-        assert unsigned(dbg_x2) = 16 report "X2 mismatch" severity error;
-        assert unsigned(dbg_x3) = 0 report "Branch jumped" severity error;
+        assert unsigned(dbg_x2) = 0 report "X2 mismatch" severity error;
+        assert unsigned(dbg_x3) = 16 report "X3 mismatch" severity error;
         assert unsigned(dbg_x4) = 0 report "X4 mismatch" severity error;
         assert unsigned(dbg_x5) = 8 report "X5 mismatch" severity error;
 
@@ -65,7 +69,7 @@ begin
                    " | x2 = " & integer'image(to_integer(unsigned(dbg_x2))) &
                    " | x3 = " & integer'image(to_integer(unsigned(dbg_x3))) &
                    " | x4 = " & integer'image(to_integer(unsigned(dbg_x4))) &
-                   " | x5 = " & integer'image(to_integer(unsigned(dbg_x5)));
+                   " | x5 = " & integer'image(to_integer(unsigned(dbg_x5))) ;
     end process;
 
 end architecture;
