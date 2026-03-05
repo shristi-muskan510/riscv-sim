@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.pipeline_pkg.all;
 
 entity core is
     port(clk   : in std_logic;
@@ -9,19 +10,27 @@ entity core is
          dbg_x2 : out std_logic_vector(31 downto 0);
          dbg_x3 : out std_logic_vector(31 downto 0);
          dbg_x4 : out std_logic_vector(31 downto 0);
-         dbg_x5 : out std_logic_vector(31 downto 0)
+         dbg_x5 : out std_logic_vector(31 downto 0);
+         if_pc  : out std_logic_vector(31 downto 0);
+         id_pc  : out std_logic_vector(31 downto 0);
+         ex_pc  : out std_logic_vector(31 downto 0);
+         mem_pc : out std_logic_vector(31 downto 0);
+         wb_pc  : out std_logic_vector(31 downto 0);
+         alu_result : out std_logic_vector(31 downto 0);
+         data_mem_out : out std_logic_vector(31 downto 0)
     );
 end entity core;
 
 architecture rtl of core is
-    -- PC 
+    -- =============== IF stage =============== --
     signal pc_next: std_logic_vector(31 downto 0);
     signal pc_curr: std_logic_vector(31 downto 0);
+    signal pc_plus4: std_logic_vector(31 downto 0);
 
     -- Instr_mem
     signal instr: std_logic_vector(31 downto 0);
 
-    -- Decoder
+    -- =============== ID stage =============== --
     signal opcode: std_logic_vector(6 downto 0);
     signal func3: std_logic_vector(2 downto 0);
     signal func7: std_logic_vector(6 downto 0);
@@ -35,39 +44,100 @@ architecture rtl of core is
     signal isImm, ra, isWb, isLd, isSt, isBranch: std_logic;
     signal alu_s: std_logic_vector(3 downto 0);
 
-    -- ALU
-    signal alu_result: std_logic_vector(31 downto 0);
+    -- =============== EX stage =============== --
+    -- signal alu_result: std_logic_vector(31 downto 0);
     signal isBranchTaken: std_logic;
-
-    -- Data memory
-    signal data_mem_out: std_logic_vector(31 downto 0);
-
-    -- MUX signals
-    signal a_mux: std_logic_vector(31 downto 0);
-    signal result_mux: std_logic_vector(31 downto 0);
-    signal pc_plus4: std_logic_vector(31 downto 0);
     signal pc_branch: std_logic_vector(31 downto 0);
+
+    -- =============== MEM stage =============== --
+    -- signal data_mem_out: std_logic_vector(31 downto 0);
+
+    -- =============== WB stage =============== --
+    signal wb_data: std_logic_vector(31 downto 0);
+
+    -- ========= Pipeline registers ========= --
+
+    signal IF_ID_in: IF_ID_type;
+    signal IF_ID_out: IF_ID_type;
+
+    signal ID_EX_in: ID_EX_type;
+    signal ID_EX_out: ID_EX_type;
+
+    signal EX_MEM_in: EX_MEM_type;
+    signal EX_MEM_out: EX_MEM_type;
+
+    signal MEM_WB_in: MEM_WB_type;
+    signal MEM_WB_out: MEM_WB_type;
 
 begin
 
-    -- PC update logic // [alu will give isBranchTaken and put in EX/MEM reg. direct connection to pc and updateion will happen. ig??]
-    process(pc_plus4, pc_branch, pc_jump, isBranchTaken, isUJ, result_mux)
+    if_pc  <= pc_curr;
+    id_pc  <= IF_ID_out.pc;
+    ex_pc  <= ID_EX_out.pc;
+    mem_pc <= EX_MEM_out.pc;
+    wb_pc  <= MEM_WB_out.pc;
+
+    -- ======= Pipeline record packaging ====== --
+    IF_ID_in.pc <= pc_curr;
+    IF_ID_in.pc_plus4 <= pc_plus4;
+    IF_ID_in.instr <= instr;
+
+    ID_EX_in.op1 <= rd1;
+    ID_EX_in.op2 <= rd2;
+    ID_EX_in.imm <= imm;
+    ID_EX_in.rd <= rd;
+    ID_EX_in.pc <= IF_ID_out.pc;
+    ID_EX_in.pc_plus4 <= IF_ID_out.pc_plus4;
+    ID_EX_in.isWb <= isWb;
+    ID_EX_in.isLd <= isLd;
+    ID_EX_in.isSt <= isSt;
+    ID_EX_in.isImm <= isImm;
+    ID_EX_in.ra <= ra;
+    ID_EX_in.alu_s <= alu_s;
+    ID_EX_in.isBranch <= isBranch;
+
+    EX_MEM_in.alu_result <= alu_result;
+    EX_MEM_in.rd <= ID_EX_out.rd;
+    EX_MEM_in.op2 <= ID_EX_out.op2;
+    EX_MEM_in.pc <= ID_EX_out.pc;
+    EX_MEM_in.pc_plus4 <= ID_EX_out.pc_plus4;
+    EX_MEM_in.isWb <= ID_EX_out.isWb;
+    EX_MEM_in.isLd <= ID_EX_out.isLd;
+    EX_MEM_in.isSt <= ID_EX_out.isSt;
+    EX_MEM_in.ra <= ID_EX_out.ra;
+    EX_MEM_in.isBranch <= ID_EX_out.isBranch;
+
+    MEM_WB_in.alu_result <= EX_MEM_out.alu_result;
+    MEM_WB_in.rd <= EX_MEM_out.rd;
+    MEM_WB_in.mem_data <= data_mem_out; 
+    MEM_WB_in.pc <= EX_MEM_out.pc;
+    MEM_WB_in.pc_plus4 <= EX_MEM_out.pc_plus4; 
+    MEM_WB_in.isWb <= EX_MEM_out.isWb;
+    MEM_WB_in.isLd <= EX_MEM_out.isLd;
+    MEM_WB_in.ra <= EX_MEM_out.ra;
+
+    -- ========= pc_mux logic ========= --
+
+    process(pc_plus4, pc_branch, alu_result, ID_EX_out.ra, isBranchTaken)
     begin
         if isBranchTaken = '1' then
             pc_next <= pc_branch;
-        elsif ra = '1' then
-            pc_next <= result_mux;
+        elsif ID_EX_out.ra = '1' then
+            pc_next <= alu_result;
         else
             pc_next <= pc_plus4;
         end if;
     end process;
 
-    pc_inst: entity work.pc
+    -- ================================ --
+
+    stageIF_inst: entity work.stageIF
         port map (
             clk => clk,
             reset => reset,
             pc_next => pc_next,
-            pc_curr => pc_curr
+            pc_curr => pc_curr,
+            pc_plus4 => pc_plus4
         );
 
     imem_inst: entity work.instr_mem
@@ -76,9 +146,17 @@ begin
             instr => instr
         );
 
-    decoder_inst: entity work.decoder
+    IF_ID_inst: entity work.IF_ID
+        port map(
+            clk => clk,
+            reset => reset,
+            IF_ID_in => IF_ID_in,
+            IF_ID_out => IF_ID_out
+        );
+
+    ID_inst: entity work.ID
         port map (
-            instr => instr,
+            instr => IF_ID_out.instr,
             opcode => opcode,
             rd => rd,
             rs1 => rs1,
@@ -86,32 +164,6 @@ begin
             func3 => func3,
             func7 => func7,
             imm => imm
-        );
-
-    regfile_inst: entity work.regfile
-        port map (
-            clk => clk,
-            we => isWb,
-            rs1 => rs1,
-            rs2 => rs2,
-            rd => rd,
-            wd => result_mux,
-            rd1 => rd1,
-            rd2 => rd2,
-
-            dbg_x1 => dbg_x1,
-            dbg_x2 => dbg_x2,
-            dbg_x3 => dbg_x3,
-            dbg_x4 => dbg_x4,
-            dbg_x5 => dbg_x5
-        );
-
-    alu_inst: entity work.alu
-        port map (
-            op1 => rd1,
-            op2 => a_mux,
-            alu_s => alu_s,
-            alu_result => alu_result
         );
 
     control_inst: entity work.control
@@ -128,13 +180,83 @@ begin
             isBranch => isBranch
         );
 
-    dmem_inst: entity work.data_mem
+    regfile_inst: entity work.regfile
+        port map (
+            clk => clk,
+            we => MEM_WB_out.isWb,
+            rs1 => rs1,
+            rs2 => rs2,
+            rd => MEM_WB_out.rd,
+            wd => wb_data,
+            rd1 => rd1,
+            rd2 => rd2,
+
+            dbg_x1 => dbg_x1,
+            dbg_x2 => dbg_x2,
+            dbg_x3 => dbg_x3,
+            dbg_x4 => dbg_x4,
+            dbg_x5 => dbg_x5
+        );
+
+    ID_EX_inst: entity work.ID_EX
+        port map(
+            clk => clk,
+            reset => reset,
+            ID_EX_in => ID_EX_in,
+            ID_EX_out => ID_EX_out
+        );
+
+    EX_inst: entity work.EX
+        port map (
+            op1 => ID_EX_out.op1,
+            op2 => ID_EX_out.op2,
+            imm => ID_EX_out.imm,
+            pc_curr => ID_EX_out.pc,
+            pc_plus4 => ID_EX_out.pc_plus4,
+            is_imm => ID_EX_out.isImm,
+            isBranch => ID_EX_out.isBranch,
+            alu_s => ID_EX_out.alu_s,
+            alu_result => alu_result,
+            isBranchTaken => isBranchTaken,
+            pc_branch => pc_branch
+        );
+
+    EX_MEM_inst: entity work.EX_MEM
+        port map(
+            clk => clk,
+            reset => reset,
+            EX_MEM_in => EX_MEM_in,
+            EX_MEM_out => EX_MEM_out
+        );
+
+    MEM_inst: entity work.MEM
         port map(
             clk => clk, 
-            address => alu_result,
-            we => isSt,
-            wd => rd2,
+            address => EX_MEM_out.alu_result,
+            we => EX_MEM_out.isSt,
+            wd => EX_MEM_out.op2,
             rd => data_mem_out
+        );
+
+    MEM_WB_inst: entity work.MEM_WB
+        port map(
+            clk => clk,
+            reset => reset,
+            MEM_WB_in => MEM_WB_in,
+            MEM_WB_out => MEM_WB_out
+        );
+
+    WB_inst: entity work.WB
+        port map(
+            alu_result => MEM_WB_out.alu_result,
+            mem_data   => MEM_WB_out.mem_data,
+            isLd       => MEM_WB_out.isLd,
+            isWb_in    => MEM_WB_out.isWb,
+            rd_in      => MEM_WB_out.rd,
+
+            wb_data    => wb_data,
+            isWb_out   => isWb,
+            rd_out     => rd
         );
 
 end rtl;

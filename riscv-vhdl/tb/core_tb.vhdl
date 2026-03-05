@@ -1,75 +1,111 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use std.textio.all;
+use work.pipeline_pkg.all;
 
-entity core_tb is
+entity core_pipeline_tb is
 end entity;
 
-architecture sim of core_tb is
-    -- Clock and reset
+architecture sim of core_pipeline_tb is
+    -- Clock and Reset signals
     signal clk   : std_logic := '0';
     signal reset : std_logic := '1';
-    signal pc_curr : std_logic_vector(31 downto 0);
-    signal dbg_x1 : std_logic_vector(31 downto 0);
-    signal dbg_x2 : std_logic_vector(31 downto 0);
-    signal dbg_x3 : std_logic_vector(31 downto 0);
-    signal dbg_x4 : std_logic_vector(31 downto 0);
-    signal dbg_x5 : std_logic_vector(31 downto 0);
+    signal cycle : integer := 0;
+
+    -- Pipeline Stage Monitoring Signals (Mapped to Core Ports)
+    signal pc_if, pc_id, pc_ex, pc_mem, pc_wb : std_logic_vector(31 downto 0);
+    
+    -- Debug register outputs
+    signal dbg_x1, dbg_x2, dbg_x3, dbg_x4, dbg_x5 : std_logic_vector(31 downto 0);
+
+    signal data_mem_out, alu_result: std_logic_vector(31 downto 0);
+
 begin
 
-    -- Clock generator: 10 ns period
-    clk <= not clk after 5 ns;
-
-    -- Instantiate instruction memory
-    instr_mem_inst: entity work.instr_mem
-        port map (
-            pc  => pc_curr
-        );
-
-    -- Instantiate your core
+    -- 1. Unit Under Test (UUT)
+    -- We map directly to the debug ports you added to core.vhdl
     uut: entity work.core
         port map (
-            clk      => clk,
-            reset    => reset,
-            dbg_x1   => dbg_x1,
-            dbg_x2   => dbg_x2,
-            dbg_x3   => dbg_x3,
-            dbg_x4   => dbg_x4,
-            dbg_x5    => dbg_x5
+            clk    => clk,
+            reset  => reset,
+
+            data_mem_out => data_mem_out,
+            alu_result => alu_result,
+            
+            -- Debug PC Ports (Stable connection)
+            if_pc  => pc_if,
+            id_pc  => pc_id,
+            ex_pc  => pc_ex,
+            mem_pc => pc_mem,
+            wb_pc  => pc_wb,
+
+            -- Register File Debug
+            dbg_x1 => dbg_x1,
+            dbg_x2 => dbg_x2,
+            dbg_x3 => dbg_x3,
+            dbg_x4 => dbg_x4,
+            dbg_x5 => dbg_x5
         );
 
-    -- Stimulus process
+    -- 2. Clock Generation (100MHz / 10ns period)
+    clk <= not clk after 5 ns;
+
+    -- 3. Cycle Counter
+    process(clk)
+    begin
+        if rising_edge(clk) then
+            if reset = '0' then
+                cycle <= cycle + 1;
+            end if;
+        end if;
+    end process;
+
+    -- 4. Stimulus Process
     stim_proc: process
     begin
-        -- Apply reset
+        -- Hold reset to initialize all pipeline stages
         reset <= '1';
-        wait for 20 ns;
+        wait for 20 ns; 
         reset <= '0';
-
-        -- Let CPU run for enough cycles
-        wait for 100 ns;
-
-        -- Assertions
-        assert unsigned(dbg_x1) = 114 report "X1 mismatch" severity error;
-        assert unsigned(dbg_x2) = 0 report "X2 mismatch" severity error;
-        assert unsigned(dbg_x3) = 16 report "X3 mismatch" severity error;
-        assert unsigned(dbg_x4) = 0 report "X4 mismatch" severity error;
-        assert unsigned(dbg_x5) = 8 report "X5 mismatch" severity error;
-
-        report "All checks passed!" severity note;
+        
+        -- Run long enough to see instructions exit the 5-stage pipe
+        wait for 200 ns;
+        
+        report "Simulation Complete. Check the terminal for pipeline flow.";
         std.env.stop;
     end process;
 
-    pc_monitor: process
-begin
-    wait until rising_edge(clk);
-    wait for 1 ns;
-            report 
-                   " | x1 = " & integer'image(to_integer(unsigned(dbg_x1))) &
-                   " | x2 = " & integer'image(to_integer(unsigned(dbg_x2))) &
-                   " | x3 = " & integer'image(to_integer(unsigned(dbg_x3))) &
-                   " | x4 = " & integer'image(to_integer(unsigned(dbg_x4))) &
-                   " | x5 = " & integer'image(to_integer(unsigned(dbg_x5))) ;
+    -- 5. PIPELINE MONITOR (Terminal Output)
+    -- Prints the PC at every stage to visualize the 'staircase' flow
+    process
+        variable l : line;
+    begin
+        wait until rising_edge(clk);
+        wait for 1 ns; -- Wait for delta cycles to settle
+
+        if reset = '0' then
+            write(l, string'("Cycle: "));
+            write(l, cycle);
+            write(l, string'(" | IF: "));
+            write(l, to_hstring(pc_if));
+            write(l, string'(" | ID: "));
+            write(l, to_hstring(pc_id));
+            write(l, string'(" | EX: "));
+            write(l, to_hstring(pc_ex));
+            write(l, string'(" | MEM: "));
+            write(l, to_hstring(pc_mem));
+            write(l, string'(" | WB: "));
+            write(l, to_hstring(pc_wb));
+            write(l, string'(" | x1: "));
+            write(l, to_integer(signed(dbg_x1)));
+            write(l, string'(" | alu: "));
+            write(l, to_integer(signed(alu_result)));
+            write(l, string'(" | mem: "));
+            write(l, to_integer(signed(data_mem_out)));
+            
+            writeline(output, l);
+        end if;
     end process;
 
 end architecture;

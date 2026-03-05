@@ -25,9 +25,6 @@ begin
         isImm <= '0';
         alu_s <= "1111";
         isBranch <= '0';
-        isUJ <= '0';
-        isLUI <= '0';
-        isAUIPC <= '0';
         ra <= '0';
 
         case opcode is

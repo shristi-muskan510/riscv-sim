@@ -2,15 +2,16 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity IF is
+entity stageIF is
     port(clk: in std_logic;
          reset: in std_logic;
          pc_next: in std_logic_vector(31 downto 0);
-         pc_curr: out std_logic_vector(31 downto 0)
+         pc_curr: out std_logic_vector(31 downto 0);
+         pc_plus4: out std_logic_vector(31 downto 0)
     );
-end IF;
+end stageIF;
 
-architecture rtl of IF is
+architecture rtl of stageIF is
     signal pc_reg: std_logic_vector(31 downto 0) := (others => '0');
 
 begin
@@ -26,4 +27,5 @@ begin
         end if;
     end process;
     pc_curr <= pc_reg;
+    pc_plus4 <= std_logic_vector(unsigned(pc_curr) + to_unsigned(4, 32));
 end rtl;

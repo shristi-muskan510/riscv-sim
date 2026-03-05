@@ -32,8 +32,7 @@ architecture rtl of EX is
                 a_mux := signed(op2);
             end if;
 
-            case isBranch is
-                when '0' =>
+            if isBranch = '0' then
                 case alu_s is
                     when "0000" => res := signed(op1) + (a_mux); -- ADD/ADDI/(EMA for load store)
                     when "0001" => res := signed(op1) - (a_mux); -- SUB
@@ -66,7 +65,7 @@ architecture rtl of EX is
                 end case;
 
                 -- ============== BRANCH INSTRUCTIONS =============== -- 
-                when '1' =>
+                else
                 case alu_s is
                     when "0000" =>  -- BEQ
                     if signed(op1) = signed(a_mux) then
@@ -102,7 +101,8 @@ architecture rtl of EX is
                     isBranchTaken <= '0';
                 end case;    
 
-            end case;
+            end if;
+
             alu_result <= std_logic_vector(res);
             pc_branch <= std_logic_vector(signed(pc_curr) + signed(imm));
         end process;
