@@ -29,9 +29,6 @@ begin
         port map (
             clk    => clk,
             reset  => reset,
-
-            data_mem_out => data_mem_out,
-            alu_result => alu_result,
             
             -- Debug PC Ports (Stable connection)
             if_pc  => pc_if,
@@ -99,10 +96,8 @@ begin
             write(l, to_hstring(pc_wb));
             write(l, string'(" | x1: "));
             write(l, to_integer(signed(dbg_x1)));
-            write(l, string'(" | alu: "));
-            write(l, to_integer(signed(alu_result)));
-            write(l, string'(" | mem: "));
-            write(l, to_integer(signed(data_mem_out)));
+            write(l, string'(" | x5: "));
+            write(l, to_integer(signed(dbg_x5)));
             
             writeline(output, l);
         end if;

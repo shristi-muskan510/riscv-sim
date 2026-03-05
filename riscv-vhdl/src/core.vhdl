@@ -15,9 +15,7 @@ entity core is
          id_pc  : out std_logic_vector(31 downto 0);
          ex_pc  : out std_logic_vector(31 downto 0);
          mem_pc : out std_logic_vector(31 downto 0);
-         wb_pc  : out std_logic_vector(31 downto 0);
-         alu_result : out std_logic_vector(31 downto 0);
-         data_mem_out : out std_logic_vector(31 downto 0)
+         wb_pc  : out std_logic_vector(31 downto 0)
     );
 end entity core;
 
@@ -45,12 +43,12 @@ architecture rtl of core is
     signal alu_s: std_logic_vector(3 downto 0);
 
     -- =============== EX stage =============== --
-    -- signal alu_result: std_logic_vector(31 downto 0);
+    signal alu_result: std_logic_vector(31 downto 0);
     signal isBranchTaken: std_logic;
     signal pc_branch: std_logic_vector(31 downto 0);
 
     -- =============== MEM stage =============== --
-    -- signal data_mem_out: std_logic_vector(31 downto 0);
+    signal data_mem_out: std_logic_vector(31 downto 0);
 
     -- =============== WB stage =============== --
     signal wb_data: std_logic_vector(31 downto 0);
@@ -255,8 +253,8 @@ begin
             rd_in      => MEM_WB_out.rd,
 
             wb_data    => wb_data,
-            isWb_out   => isWb,
-            rd_out     => rd
+            isWb_out   => open,
+            rd_out     => open
         );
 
 end rtl;
