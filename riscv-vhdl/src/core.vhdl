@@ -15,7 +15,8 @@ entity core is
          id_pc  : out std_logic_vector(31 downto 0);
          ex_pc  : out std_logic_vector(31 downto 0);
          mem_pc : out std_logic_vector(31 downto 0);
-         wb_pc  : out std_logic_vector(31 downto 0)
+         wb_pc  : out std_logic_vector(31 downto 0);
+         wb_instr: out std_logic_vector(31 downto 0)
     );
 end entity core;
 
@@ -75,6 +76,8 @@ begin
     mem_pc <= EX_MEM_out.pc;
     wb_pc  <= MEM_WB_out.pc;
 
+    wb_instr <= MEM_WB_out.instr;
+
     -- ======= Pipeline record packaging ====== --
     IF_ID_in.pc <= pc_curr;
     IF_ID_in.pc_plus4 <= pc_plus4;
@@ -93,6 +96,7 @@ begin
     ID_EX_in.ra <= ra;
     ID_EX_in.alu_s <= alu_s;
     ID_EX_in.isBranch <= isBranch;
+    ID_EX_in.instr <= IF_ID_out.instr;
 
     EX_MEM_in.alu_result <= alu_result;
     EX_MEM_in.rd <= ID_EX_out.rd;
@@ -104,6 +108,7 @@ begin
     EX_MEM_in.isSt <= ID_EX_out.isSt;
     EX_MEM_in.ra <= ID_EX_out.ra;
     EX_MEM_in.isBranch <= ID_EX_out.isBranch;
+    EX_MEM_in.instr <= ID_EX_out.instr;
 
     MEM_WB_in.alu_result <= EX_MEM_out.alu_result;
     MEM_WB_in.rd <= EX_MEM_out.rd;
@@ -113,6 +118,7 @@ begin
     MEM_WB_in.isWb <= EX_MEM_out.isWb;
     MEM_WB_in.isLd <= EX_MEM_out.isLd;
     MEM_WB_in.ra <= EX_MEM_out.ra;
+    MEM_WB_in.instr <= EX_MEM_out.instr;
 
     -- ========= pc_mux logic ========= --
 

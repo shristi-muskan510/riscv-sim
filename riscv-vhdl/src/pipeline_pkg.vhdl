@@ -23,6 +23,7 @@ package pipeline_pkg is
         ra       : std_logic;
         alu_s    : std_logic_vector(3 downto 0);
         isBranch : std_logic;
+        instr    : std_logic_vector(31 downto 0);
     end record;
 
     type EX_MEM_type is record 
@@ -36,6 +37,7 @@ package pipeline_pkg is
         isSt       : std_logic;
         ra         : std_logic;
         isBranch   : std_logic;
+        instr    : std_logic_vector(31 downto 0);
     end record;
 
     type MEM_WB_type is record 
@@ -47,6 +49,7 @@ package pipeline_pkg is
         isWb       : std_logic;
         isLd       : std_logic;
         ra         : std_logic;
+        instr    : std_logic_vector(31 downto 0);
     end record;
 
 end package;

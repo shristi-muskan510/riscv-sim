@@ -30,6 +30,7 @@ begin
             ID_EX_out.ra <= '0';
             ID_EX_out.alu_s <= (others => '0'); 
             ID_EX_out.isBranch <= '0'; 
+            ID_EX_out.instr    <= (others => '0');
         elsif rising_edge(clk) then
             ID_EX_out <= ID_EX_in;
         end if;

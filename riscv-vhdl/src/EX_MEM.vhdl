@@ -27,6 +27,7 @@ begin
             EX_MEM_out.isSt <= '0';
             EX_MEM_out.ra <= '0';
             EX_MEM_out.isBranch <= '0';
+            EX_MEM_out.instr    <= (others => '0');
         elsif rising_edge(clk) then
             EX_MEM_out <= EX_MEM_in;
         end if;

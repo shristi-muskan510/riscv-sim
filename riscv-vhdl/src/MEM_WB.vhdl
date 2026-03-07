@@ -25,6 +25,7 @@ begin
             MEM_WB_out.isWb <= '0';
             MEM_WB_out.isLd <= '0';
             MEM_WB_out.ra <= '0';
+            MEM_WB_out.instr    <= (others => '0');
         elsif rising_edge(clk) then
             MEM_WB_out <= MEM_WB_in;
         end if;

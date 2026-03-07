@@ -19,7 +19,8 @@ architecture sim of core_pipeline_tb is
     -- Debug register outputs
     signal dbg_x1, dbg_x2, dbg_x3, dbg_x4, dbg_x5 : std_logic_vector(31 downto 0);
 
-    signal data_mem_out, alu_result: std_logic_vector(31 downto 0);
+    signal wb_instr : std_logic_vector(31 downto 0);
+    signal instrs_completed : integer := 0;
 
 begin
 
@@ -30,6 +31,8 @@ begin
             clk    => clk,
             reset  => reset,
             
+            wb_instr => wb_instr,
+
             -- Debug PC Ports (Stable connection)
             if_pc  => pc_if,
             id_pc  => pc_id,
@@ -58,6 +61,16 @@ begin
         end if;
     end process;
 
+    process(clk)
+    begin
+        if rising_edge(clk) and reset = '0' then
+            -- We ignore NOP (0x13) and uninitialized (0x0)
+            if wb_instr /= x"00000013" and wb_instr /= x"00000000" then
+                instrs_completed <= instrs_completed + 1;
+            end if;
+        end if;
+    end process;
+
     -- 4. Stimulus Process
     stim_proc: process
     begin
@@ -69,7 +82,11 @@ begin
         -- Run long enough to see instructions exit the 5-stage pipe
         wait for 200 ns;
         
-        report "Simulation Complete. Check the terminal for pipeline flow.";
+        report "--- ARCHITECTURAL EVALUATION ---";
+        report "Total Cycles: " & integer'image(cycle);
+        report "Real Instructions: " & integer'image(instrs_completed);
+        report "Baseline IPC: " & real'image(real(instrs_completed) / real(cycle));
+        report "---------------------------------";
         std.env.stop;
     end process;
 
