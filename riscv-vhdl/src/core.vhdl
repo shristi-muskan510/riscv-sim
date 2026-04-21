@@ -133,7 +133,29 @@ begin
         end if;
     end process;
 
-    -- ================================ --
+    -- ===== Data forwarding logic ===== --
+
+    process(ID_EX_out, EX_MEM_out, MEM_WB_out, reg_file_out1, reg_file_out2)
+    begin
+        op1 <= ID_EX_out.read_data1;
+        op2 <= ID_EX_out.read_data2;
+
+        -- 1. Forwarding for rs1
+        if (EX_MEM_out.we = '1' and EX_MEM_out.rd /= "00000" and EX_MEM_out.rd = ID_EX_out.rs1) then
+            op1 <= EX_MEM_out.alu_result; 
+        elsif (MEM_WB_out.we = '1' and MEM_WB_out.rd /= "00000" and MEM_WB_out.rd = ID_EX_out.rs1) then
+            op1 <= MEM_WB_out.write_data;
+        end if;
+
+        -- 2. Forwarding for rs2
+        if (EX_MEM_out.we = '1' and EX_MEM_out.rd /= "00000" and EX_MEM_out.rd = ID_EX_out.rs2) then
+            op2 <= EX_MEM_out.alu_result;
+        elsif (MEM_WB_out.we = '1' and MEM_WB_out.rd /= "00000" and MEM_WB_out.rd = ID_EX_out.rs2) then
+            op2 <= MEM_WB_out.write_data;
+        end if;
+    end process;
+
+    -- ================================= --
 
     stageIF_inst: entity work.stageIF
         port map (

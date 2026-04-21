@@ -37,14 +37,18 @@ begin
     end process;
 
     -- Read logic
-        rd1 <= regs(to_integer(unsigned(rs1)));
-        rd2 <= regs(to_integer(unsigned(rs2)));
+    -- If rs1 = rd, don't wait: just read directly 
+    rd1 <= wd when (we = '1' and rs1 = rd and rs1 /= "00000") else
+        regs(to_integer(unsigned(rs1)));
+    
+    rd2 <= wd when (we = '1' and rs2 = rd and rs2 /= "00000") else
+        regs(to_integer(unsigned(rs2)));
 
     -- Debug taps --
-    dbg_x1 <= regs(1);
-    dbg_x2 <= regs(2);
-    dbg_x3 <= regs(3);
-    dbg_x4 <= regs(4);
-    dbg_x5 <= regs(5);
+    dbg_x1 <= wd when (we = '1' and rd = "00001") else regs(1);
+    dbg_x2 <= wd when (we = '1' and rd = "00010") else regs(2);
+    dbg_x3 <= wd when (we = '1' and rd = "00011") else regs(3);
+    dbg_x4 <= wd when (we = '1' and rd = "00100") else regs(4);
+    dbg_x5 <= wd when (we = '1' and rd = "00101") else regs(5);
 
 end rtl;
