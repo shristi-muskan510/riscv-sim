@@ -113,6 +113,12 @@ begin
             write(l, to_integer(signed(pc_wb)));
             write(l, string'(" | x1: "));
             write(l, to_integer(signed(dbg_x1)));
+            write(l, string'(" | x2: "));
+            write(l, to_integer(signed(dbg_x2)));
+            write(l, string'(" | x3: "));
+            write(l, to_integer(signed(dbg_x3)));
+            write(l, string'(" | x4: "));
+            write(l, to_integer(signed(dbg_x4)));
             write(l, string'(" | x5: "));
             write(l, to_integer(signed(dbg_x5)));
             

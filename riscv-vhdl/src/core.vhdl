@@ -68,6 +68,11 @@ architecture rtl of core is
     signal MEM_WB_in: MEM_WB_type;
     signal MEM_WB_out: MEM_WB_type;
 
+    signal rs1_in_decode : std_logic_vector(4 downto 0);
+    signal rs2_in_decode : std_logic_vector(4 downto 0);
+    signal stall : std_logic := '0';
+    signal stall_n : std_logic;
+
 begin
 
     if_pc  <= pc_curr;
@@ -85,6 +90,8 @@ begin
 
     ID_EX_in.op1 <= rd1;
     ID_EX_in.op2 <= rd2;
+    ID_EX_in.rs1 <= rs1;
+    ID_EX_in.rs2 <= rs2;
     ID_EX_in.imm <= imm;
     ID_EX_in.rd <= rd;
     ID_EX_in.pc <= IF_ID_out.pc;
@@ -133,25 +140,58 @@ begin
         end if;
     end process;
 
+    -- ==== Load-use hazard control ==== --
+
+    rs1_in_decode <= IF_ID_out.instr(19 downto 15);
+    rs2_in_decode <= IF_ID_out.instr(24 downto 20);
+
+    process(ID_EX_out, rs1_in_decode, rs2_in_decode)
+    begin
+        stall <= '0';
+
+        if (ID_EX_out.isLd = '1' and ID_EX_out.rd /= "00000") then
+            if (ID_EX_out.rd = rs1_in_decode or ID_EX_out.rd = rs2_in_decode) then
+                stall <= '1';
+            end if;
+        end if;
+    end process;
+
+    process(stall, ID_EX_in, isWb, isLd, isSt, isImm)
+    begin
+        if(stall = '1') then
+            ID_EX_in.isWb <= '0';
+            ID_EX_in.isLd <= '0';
+            ID_EX_in.isSt <= '0';
+            ID_EX_in.isImm <= '0';
+        else
+            ID_EX_in.isWb <= isWb;
+            ID_EX_in.isLd <= isLd;
+            ID_EX_in.isSt <= isSt;
+            ID_EX_in.isImm <= isImm;
+        end if;
+    end process;
+
+    stall_n <= not stall;
+
     -- ===== Data forwarding logic ===== --
 
-    process(ID_EX_out, EX_MEM_out, MEM_WB_out, reg_file_out1, reg_file_out2)
+    process(ID_EX_out, EX_MEM_out, MEM_WB_out, rd1, rd2)
     begin
-        op1 <= ID_EX_out.read_data1;
-        op2 <= ID_EX_out.read_data2;
+        rd1 <= ID_EX_out.op1;
+        rd2 <= ID_EX_out.op2;
 
         -- 1. Forwarding for rs1
-        if (EX_MEM_out.we = '1' and EX_MEM_out.rd /= "00000" and EX_MEM_out.rd = ID_EX_out.rs1) then
-            op1 <= EX_MEM_out.alu_result; 
-        elsif (MEM_WB_out.we = '1' and MEM_WB_out.rd /= "00000" and MEM_WB_out.rd = ID_EX_out.rs1) then
-            op1 <= MEM_WB_out.write_data;
+        if (EX_MEM_out.isWb = '1' and EX_MEM_out.rd /= "00000" and EX_MEM_out.rd = ID_EX_out.rs1) then
+            rd1 <= EX_MEM_out.alu_result; 
+        elsif (MEM_WB_out.isWb = '1' and MEM_WB_out.rd /= "00000" and MEM_WB_out.rd = ID_EX_out.rs1) then
+            rd1 <= MEM_WB_out.mem_data;
         end if;
 
         -- 2. Forwarding for rs2
-        if (EX_MEM_out.we = '1' and EX_MEM_out.rd /= "00000" and EX_MEM_out.rd = ID_EX_out.rs2) then
-            op2 <= EX_MEM_out.alu_result;
-        elsif (MEM_WB_out.we = '1' and MEM_WB_out.rd /= "00000" and MEM_WB_out.rd = ID_EX_out.rs2) then
-            op2 <= MEM_WB_out.write_data;
+        if (EX_MEM_out.isWb = '1' and EX_MEM_out.rd /= "00000" and EX_MEM_out.rd = ID_EX_out.rs2) then
+            rd2 <= EX_MEM_out.alu_result;
+        elsif (MEM_WB_out.isWb = '1' and MEM_WB_out.rd /= "00000" and MEM_WB_out.rd = ID_EX_out.rs2) then
+            rd2 <= MEM_WB_out.mem_data;
         end if;
     end process;
 
@@ -161,6 +201,7 @@ begin
         port map (
             clk => clk,
             reset => reset,
+            en => stall_n,
             pc_next => pc_next,
             pc_curr => pc_curr,
             pc_plus4 => pc_plus4
@@ -176,6 +217,7 @@ begin
         port map(
             clk => clk,
             reset => reset,
+            en => stall_n,
             IF_ID_in => IF_ID_in,
             IF_ID_out => IF_ID_out
         );

@@ -12,6 +12,8 @@ package pipeline_pkg is
     type ID_EX_type is record
         op1      : std_logic_vector(31 downto 0);
         op2      : std_logic_vector(31 downto 0);
+        rs1      : std_logic_vector(4 downto 0);
+        rs2      : std_logic_vector(4 downto 0);
         imm      : std_logic_vector(31 downto 0);
         rd       : std_logic_vector(4 downto 0);
         pc       : std_logic_vector(31 downto 0);

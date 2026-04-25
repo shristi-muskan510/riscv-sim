@@ -7,6 +7,7 @@ entity IF_ID is
     port(
         clk: in std_logic;
         reset: in std_logic;
+        en: in std_logic;
         IF_ID_in: in IF_ID_type;
         IF_ID_out: out IF_ID_type
     );
@@ -21,7 +22,9 @@ begin
             IF_ID_out.pc_plus4 <= (others => '0');
             IF_ID_out.instr    <= (others => '0');
         elsif rising_edge(clk) then
-            IF_ID_out <= IF_ID_in;
+            if en = '1' then
+                IF_ID_out <= IF_ID_in;
+            end if;
         end if;
     end process;
 end behavioral;
