@@ -12,8 +12,14 @@ entity MEM is
 end MEM;
 
 architecture rtl of  MEM is
+
     type ram_t is array (0 to 255) of std_logic_vector(31 downto 0);
-    signal ram: ram_t := (others => (others => '0'));
+    signal ram: ram_t := (
+                            0 => x"0000000A", -- Address 0 has 10
+                            1 => x"00000014", -- Address 4 has 20
+                            2 => x"00000002", -- Address 8 has 2
+                            others => (others => '0')
+                        );
 begin
     -- write
     process(clk)

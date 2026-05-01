@@ -68,6 +68,7 @@ architecture rtl of core is
     signal MEM_WB_in: MEM_WB_type;
     signal MEM_WB_out: MEM_WB_type;
 
+    signal alu_op1, alu_op2 : std_logic_vector(31 downto 0);
     signal rs1_in_decode : std_logic_vector(4 downto 0);
     signal rs2_in_decode : std_logic_vector(4 downto 0);
     signal stall : std_logic := '0';
@@ -96,13 +97,13 @@ begin
     ID_EX_in.rd <= rd;
     ID_EX_in.pc <= IF_ID_out.pc;
     ID_EX_in.pc_plus4 <= IF_ID_out.pc_plus4;
-    ID_EX_in.isWb <= isWb;
-    ID_EX_in.isLd <= isLd;
-    ID_EX_in.isSt <= isSt;
-    ID_EX_in.isImm <= isImm;
+    ID_EX_in.isWb   <= '0' when stall = '1' else isWb;
+    ID_EX_in.isLd   <= '0' when stall = '1' else isLd;
+    ID_EX_in.isSt   <= '0' when stall = '1' else isSt;
+    ID_EX_in.isImm  <= '0' when stall = '1' else isImm;
     ID_EX_in.ra <= ra;
     ID_EX_in.alu_s <= alu_s;
-    ID_EX_in.isBranch <= isBranch;
+    ID_EX_in.isBranch <= '0' when stall = '1' else isBranch;
     ID_EX_in.instr <= IF_ID_out.instr;
 
     EX_MEM_in.alu_result <= alu_result;
@@ -156,42 +157,36 @@ begin
         end if;
     end process;
 
-    process(stall, ID_EX_in, isWb, isLd, isSt, isImm)
-    begin
-        if(stall = '1') then
-            ID_EX_in.isWb <= '0';
-            ID_EX_in.isLd <= '0';
-            ID_EX_in.isSt <= '0';
-            ID_EX_in.isImm <= '0';
-        else
-            ID_EX_in.isWb <= isWb;
-            ID_EX_in.isLd <= isLd;
-            ID_EX_in.isSt <= isSt;
-            ID_EX_in.isImm <= isImm;
-        end if;
-    end process;
-
     stall_n <= not stall;
 
     -- ===== Data forwarding logic ===== --
 
-    process(ID_EX_out, EX_MEM_out, MEM_WB_out, rd1, rd2)
+    process(ID_EX_out, EX_MEM_out, MEM_WB_out)
     begin
-        rd1 <= ID_EX_out.op1;
-        rd2 <= ID_EX_out.op2;
+
+        alu_op1 <= ID_EX_out.op1;
+        alu_op2 <= ID_EX_out.op2;
 
         -- 1. Forwarding for rs1
         if (EX_MEM_out.isWb = '1' and EX_MEM_out.rd /= "00000" and EX_MEM_out.rd = ID_EX_out.rs1) then
-            rd1 <= EX_MEM_out.alu_result; 
+            alu_op1 <= EX_MEM_out.alu_result; 
         elsif (MEM_WB_out.isWb = '1' and MEM_WB_out.rd /= "00000" and MEM_WB_out.rd = ID_EX_out.rs1) then
-            rd1 <= MEM_WB_out.mem_data;
+            if MEM_WB_out.isLd = '1' then
+                alu_op1 <= MEM_WB_out.mem_data;
+            else
+                alu_op1 <= MEM_WB_out.alu_result;
+            end if;
         end if;
 
         -- 2. Forwarding for rs2
         if (EX_MEM_out.isWb = '1' and EX_MEM_out.rd /= "00000" and EX_MEM_out.rd = ID_EX_out.rs2) then
-            rd2 <= EX_MEM_out.alu_result;
+            alu_op2 <= EX_MEM_out.alu_result;
         elsif (MEM_WB_out.isWb = '1' and MEM_WB_out.rd /= "00000" and MEM_WB_out.rd = ID_EX_out.rs2) then
-            rd2 <= MEM_WB_out.mem_data;
+            if MEM_WB_out.isLd = '1' then
+                alu_op2 <= MEM_WB_out.mem_data;
+            else
+                alu_op2 <= MEM_WB_out.alu_result;
+            end if;
         end if;
     end process;
 
@@ -276,8 +271,8 @@ begin
 
     EX_inst: entity work.EX
         port map (
-            op1 => ID_EX_out.op1,
-            op2 => ID_EX_out.op2,
+            op1 => alu_op1,
+            op2 => alu_op2,
             imm => ID_EX_out.imm,
             pc_curr => ID_EX_out.pc,
             pc_plus4 => ID_EX_out.pc_plus4,
