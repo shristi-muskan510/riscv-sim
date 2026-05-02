@@ -68,11 +68,14 @@ architecture rtl of core is
     signal MEM_WB_in: MEM_WB_type;
     signal MEM_WB_out: MEM_WB_type;
 
-    signal alu_op1, alu_op2 : std_logic_vector(31 downto 0);
-    signal rs1_in_decode : std_logic_vector(4 downto 0);
-    signal rs2_in_decode : std_logic_vector(4 downto 0);
-    signal stall : std_logic := '0';
-    signal stall_n : std_logic;
+    signal alu_op1, alu_op2: std_logic_vector(31 downto 0);
+    signal rs1_in_decode: std_logic_vector(4 downto 0);
+    signal rs2_in_decode: std_logic_vector(4 downto 0);
+
+    signal stall: std_logic := '0';
+    signal stall_n: std_logic;
+
+    signal flush: std_logic := '0';
 
 begin
 
@@ -87,7 +90,7 @@ begin
     -- ======= Pipeline record packaging ====== --
     IF_ID_in.pc <= pc_curr;
     IF_ID_in.pc_plus4 <= pc_plus4;
-    IF_ID_in.instr <= instr;
+    IF_ID_in.instr <= x"00000013" when flush = '1' else instr;
 
     ID_EX_in.op1 <= rd1;
     ID_EX_in.op2 <= rd2;
@@ -97,13 +100,13 @@ begin
     ID_EX_in.rd <= rd;
     ID_EX_in.pc <= IF_ID_out.pc;
     ID_EX_in.pc_plus4 <= IF_ID_out.pc_plus4;
-    ID_EX_in.isWb   <= '0' when stall = '1' else isWb;
-    ID_EX_in.isLd   <= '0' when stall = '1' else isLd;
-    ID_EX_in.isSt   <= '0' when stall = '1' else isSt;
-    ID_EX_in.isImm  <= '0' when stall = '1' else isImm;
+    ID_EX_in.isWb   <= '0' when (stall = '1' or flush = '1') else isWb;
+    ID_EX_in.isLd   <= '0' when (stall = '1' or flush = '1') else isLd;
+    ID_EX_in.isSt   <= '0' when (stall = '1' or flush = '1') else isSt;
+    ID_EX_in.isImm  <= '0' when (stall = '1' or flush = '1') else isImm;
     ID_EX_in.ra <= ra;
     ID_EX_in.alu_s <= alu_s;
-    ID_EX_in.isBranch <= '0' when stall = '1' else isBranch;
+    ID_EX_in.isBranch <= '0' when (stall = '1' or flush = '1') else isBranch;
     ID_EX_in.instr <= IF_ID_out.instr;
 
     EX_MEM_in.alu_result <= alu_result;
@@ -190,7 +193,19 @@ begin
         end if;
     end process;
 
-    -- ================================= --
+    -- ========= Control Hazard ========= --
+
+    process(isBranchTaken, ID_EX_out)
+    begin
+        flush <= '0';
+        if (isBranchTaken = '1' or ID_EX_out.ra = '1') then
+            flush <= '1';
+        else 
+            flush <= '0';
+        end if;
+    end process;
+
+    -- ================================== --
 
     stageIF_inst: entity work.stageIF
         port map (

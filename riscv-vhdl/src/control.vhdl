@@ -121,6 +121,7 @@ begin
                 isSt  <= '0';
                 isLd <= '0';
                 alu_s  <= "1111";
+                isBranch <= '0';
         end case; 
     end process;
 
