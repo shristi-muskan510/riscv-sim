@@ -50,6 +50,7 @@ package pipeline_pkg is
         pc_plus4   : std_logic_vector(31 downto 0);
         isWb       : std_logic;
         isLd       : std_logic;
+        isSt       : std_logic;
         ra         : std_logic;
         instr    : std_logic_vector(31 downto 0);
     end record;

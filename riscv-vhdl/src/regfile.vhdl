@@ -16,7 +16,12 @@ entity regfile is
          dbg_x2 : out std_logic_vector(31 downto 0);
          dbg_x3 : out std_logic_vector(31 downto 0);
          dbg_x4 : out std_logic_vector(31 downto 0);
-         dbg_x5 : out std_logic_vector(31 downto 0)
+         dbg_x5 : out std_logic_vector(31 downto 0);
+         dbg_x6 : out std_logic_vector(31 downto 0);
+         dbg_x7 : out std_logic_vector(31 downto 0);
+         dbg_x8 : out std_logic_vector(31 downto 0);
+         dbg_x9 : out std_logic_vector(31 downto 0);
+         dbg_x10 : out std_logic_vector(31 downto 0)
     );
 end regfile;
 
@@ -50,5 +55,11 @@ begin
     dbg_x3 <= wd when (we = '1' and rd = "00011") else regs(3);
     dbg_x4 <= wd when (we = '1' and rd = "00100") else regs(4);
     dbg_x5 <= wd when (we = '1' and rd = "00101") else regs(5);
+    dbg_x6 <= wd when (we = '1' and rd = "00110") else regs(6);
+    dbg_x7 <= wd when (we = '1' and rd = "00111") else regs(7);
+    dbg_x8 <= wd when (we = '1' and rd = "01000") else regs(8);
+    dbg_x9 <= wd when (we = '1' and rd = "01001") else regs(9);
+    dbg_x10 <= wd when (we = '1' and rd = "01010") else regs(10);
+
 
 end rtl;

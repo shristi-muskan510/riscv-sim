@@ -6,11 +6,17 @@ use work.pipeline_pkg.all;
 entity core is
     port(clk   : in std_logic;
          reset : in std_logic;
+         wb_valid : out std_logic;
          dbg_x1 : out std_logic_vector(31 downto 0);
          dbg_x2 : out std_logic_vector(31 downto 0);
          dbg_x3 : out std_logic_vector(31 downto 0);
          dbg_x4 : out std_logic_vector(31 downto 0);
          dbg_x5 : out std_logic_vector(31 downto 0);
+         dbg_x6 : out std_logic_vector(31 downto 0);
+         dbg_x7 : out std_logic_vector(31 downto 0);
+         dbg_x8 : out std_logic_vector(31 downto 0);
+         dbg_x9 : out std_logic_vector(31 downto 0);
+         dbg_x10 : out std_logic_vector(31 downto 0);
          if_pc  : out std_logic_vector(31 downto 0);
          id_pc  : out std_logic_vector(31 downto 0);
          ex_pc  : out std_logic_vector(31 downto 0);
@@ -86,11 +92,12 @@ begin
     wb_pc  <= MEM_WB_out.pc;
 
     wb_instr <= MEM_WB_out.instr;
+    wb_valid <= MEM_WB_out.isWb or MEM_WB_out.isSt;
 
     -- ======= Pipeline record packaging ====== --
     IF_ID_in.pc <= pc_curr;
     IF_ID_in.pc_plus4 <= pc_plus4;
-    IF_ID_in.instr <= x"00000013" when flush = '1' else instr;
+    IF_ID_in.instr <= x"00100013" when flush = '1' else instr;
 
     ID_EX_in.op1 <= rd1;
     ID_EX_in.op2 <= rd2;
@@ -128,6 +135,7 @@ begin
     MEM_WB_in.pc_plus4 <= EX_MEM_out.pc_plus4; 
     MEM_WB_in.isWb <= EX_MEM_out.isWb;
     MEM_WB_in.isLd <= EX_MEM_out.isLd;
+    MEM_WB_in.isSt <= EX_MEM_out.isSt;
     MEM_WB_in.ra <= EX_MEM_out.ra;
     MEM_WB_in.instr <= EX_MEM_out.instr;
 
@@ -273,7 +281,12 @@ begin
             dbg_x2 => dbg_x2,
             dbg_x3 => dbg_x3,
             dbg_x4 => dbg_x4,
-            dbg_x5 => dbg_x5
+            dbg_x5 => dbg_x5,
+            dbg_x6 => dbg_x6,
+            dbg_x7 => dbg_x7,
+            dbg_x8 => dbg_x8,
+            dbg_x9 => dbg_x9,
+            dbg_x10 => dbg_x10
         );
 
     ID_EX_inst: entity work.ID_EX
